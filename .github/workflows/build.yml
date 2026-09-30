@@ -27,7 +27,7 @@ jobs:
     name: Windows - build, test, package
     runs-on: windows-latest     # Visual Studio 2022+ with MSVC
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Read the pinned JUCE commit
         id: juce
@@ -35,13 +35,13 @@ jobs:
         run: echo "sha=$(grep -oP 'set\(MCPDAW_JUCE_TAG \K[0-9a-f]{40}' CMakeLists.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Get JUCE
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: juce-framework/JUCE
           ref: ${{ steps.juce.outputs.sha }}
           path: third_party/JUCE
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -61,7 +61,7 @@ jobs:
           python tools/package_release.py --build build/Release \
             --source-url "${{ github.server_url }}/${{ github.repository }}" --ref "${{ github.ref_name }}"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: MCP-DAW-win64
           path: dist/*.zip
@@ -71,14 +71,14 @@ jobs:
     name: Linux (Ubuntu 22.04) - build, test
     runs-on: ubuntu-22.04       # the oldest Linux we support (gcc 11)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Read the pinned JUCE commit
         id: juce
         run: echo "sha=$(grep -oP 'set\(MCPDAW_JUCE_TAG \K[0-9a-f]{40}' CMakeLists.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Get JUCE
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: juce-framework/JUCE
           ref: ${{ steps.juce.outputs.sha }}
@@ -112,9 +112,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: MCP-DAW-win64
           path: dist
@@ -131,7 +131,7 @@ jobs:
           } >> notes.md
           test -s notes.md
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           name: MCP DAW ${{ github.ref_name }}
           body_path: notes.md
