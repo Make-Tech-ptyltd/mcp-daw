@@ -27,8 +27,14 @@ scripts\build-windows.cmd            :: Release build + tests
 scripts\build-windows.cmd Debug
 ```
 
-The script finds Visual Studio, configures `build\Release` with Ninja and runs the tests. To use a
-local JUCE checkout set `JUCE_PATH` first; to build elsewhere set `BUILD_DIR`.
+The script finds Visual Studio, configures `build\Release` with Ninja and runs the tests. You can also
+double-click `scripts\build-windows.cmd`; the window then stays open at the end. To use a local JUCE
+checkout set `JUCE_PATH` first; to build elsewhere set `BUILD_DIR`.
+
+If it stops straight away, run it from a Command Prompt (`cd` to the repository folder first) to read
+the message. The usual causes: the C++ workload or Git isn't installed (the script says which), the
+repository was downloaded as a zip and Windows blocked the scripts (right-click the zip → Properties →
+*Unblock* before extracting), or an antivirus sandboxed the script (allow the repository folder).
 
 Manual equivalent, from the *x64 Native Tools Command Prompt for VS 2022*:
 
