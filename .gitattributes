@@ -1,0 +1,8 @@
+* text=auto
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ttf binary
+*.wav binary
+demo/**/*.txt text eol=crlf
+demo/*.txt text eol=crlf
+Samples-Starter-Kit/*.txt text eol=crlf

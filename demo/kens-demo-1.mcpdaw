@@ -1,0 +1,3995 @@
+{
+  "format": "mcp-daw-project",
+  "version": 1,
+  "generator": "MCP DAW 0.4.0",
+  "ticksPerBeat": 960,
+  "timeSignature": "4/4",
+  "name": "Claude - Filthy 90s Jungle",
+  "bpm": 92.0,
+  "nextSerial": 1483,
+  "loop": {
+    "enabled": true,
+    "startTicks": 0,
+    "endTicks": 61440
+  },
+  "master": {
+    "gainDb": -7.199999999999996,
+    "effects": [
+      {
+        "id": "fx-811",
+        "type": "compressor",
+        "bypassed": false,
+        "parameters": {
+          "threshold": -16.0,
+          "ratio": 4.0,
+          "attack": 12.0,
+          "release": 90.0,
+          "knee": 4.0,
+          "makeup": 4.0,
+          "mix": 1.0
+        }
+      },
+      {
+        "id": "fx-812",
+        "type": "eq",
+        "bypassed": false,
+        "parameters": {
+          "band1.enabled": 0.0,
+          "band1.type": 0.0,
+          "band1.freq": 30.0,
+          "band1.gain": 0.0,
+          "band1.q": 0.707,
+          "band2.enabled": 1.0,
+          "band2.type": 1.0,
+          "band2.freq": 70.0,
+          "band2.gain": 2.0,
+          "band2.q": 0.707,
+          "band3.enabled": 1.0,
+          "band3.type": 2.0,
+          "band3.freq": 400.0,
+          "band3.gain": 0.0,
+          "band3.q": 0.707,
+          "band4.enabled": 1.0,
+          "band4.type": 2.0,
+          "band4.freq": 2000.0,
+          "band4.gain": 0.0,
+          "band4.q": 0.707,
+          "band5.enabled": 1.0,
+          "band5.type": 3.0,
+          "band5.freq": 9000.0,
+          "band5.gain": -2.0,
+          "band5.q": 0.707,
+          "band6.enabled": 0.0,
+          "band6.type": 4.0,
+          "band6.freq": 18000.0,
+          "band6.gain": 0.0,
+          "band6.q": 0.707,
+          "output": 0.0
+        }
+      }
+    ]
+  },
+  "assets": [
+    {
+      "id": "asset-1",
+      "path": "samples/snare-1.wav",
+      "sourceBpm": 0.0,
+      "tempoSource": ""
+    },
+    {
+      "id": "asset-5",
+      "path": "samples/snare-2.wav",
+      "sourceBpm": 0.0,
+      "tempoSource": ""
+    },
+    {
+      "id": "asset-7",
+      "path": "samples/808-kick-short.wav",
+      "sourceBpm": 0.0,
+      "tempoSource": ""
+    },
+    {
+      "id": "asset-25",
+      "path": "samples/ch.wav",
+      "sourceBpm": 0.0,
+      "tempoSource": ""
+    },
+    {
+      "id": "asset-43",
+      "path": "samples/cs10-open-hihat1.wav",
+      "sourceBpm": 0.0,
+      "tempoSource": ""
+    },
+    {
+      "id": "asset-48",
+      "path": "samples/808-clap.wav",
+      "sourceBpm": 0.0,
+      "tempoSource": ""
+    },
+    {
+      "id": "asset-107",
+      "path": "samples/string-bass-fat-2.wav",
+      "sourceBpm": 0.0,
+      "tempoSource": ""
+    },
+    {
+      "id": "asset-110",
+      "path": "samples/string-bass-fat-3.wav",
+      "sourceBpm": 0.0,
+      "tempoSource": ""
+    },
+    {
+      "id": "asset-113",
+      "path": "samples/string-bass-fat-4.wav",
+      "sourceBpm": 0.0,
+      "tempoSource": ""
+    },
+    {
+      "id": "asset-169",
+      "path": "samples/voicel-ss2s2.wav",
+      "sourceBpm": 0.0,
+      "tempoSource": ""
+    },
+    {
+      "id": "asset-607",
+      "path": "samples/scratch-pipes.wav",
+      "sourceBpm": 0.0,
+      "tempoSource": ""
+    },
+    {
+      "id": "asset-1182",
+      "path": "samples/55hz-sine-wave.wav",
+      "sourceBpm": 0.0,
+      "tempoSource": ""
+    }
+  ],
+  "tracks": [
+    {
+      "id": "track-710",
+      "name": "OPEN HAT",
+      "colour": 6,
+      "gainDb": -15.0,
+      "pan": 0.3,
+      "mute": false,
+      "solo": false,
+      "events": [
+        {
+          "id": "event-1477",
+          "assetId": "asset-43",
+          "startTicks": 7269,
+          "lengthTicks": 954,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1478",
+          "assetId": "asset-43",
+          "startTicks": 22655,
+          "lengthTicks": 954,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1479",
+          "assetId": "asset-43",
+          "startTicks": 37983,
+          "lengthTicks": 954,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1480",
+          "assetId": "asset-43",
+          "startTicks": 53359,
+          "lengthTicks": 954,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1481",
+          "assetId": "asset-43",
+          "startTicks": 55277,
+          "lengthTicks": 954,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.0,
+          "pitchSemitones": 0.0
+        }
+      ],
+      "effects": []
+    },
+    {
+      "id": "track-711",
+      "name": "HATS",
+      "colour": 6,
+      "gainDb": -9.0,
+      "pan": 0.2,
+      "mute": false,
+      "solo": false,
+      "events": [
+        {
+          "id": "event-1364",
+          "assetId": "asset-25",
+          "startTicks": 0,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1365",
+          "assetId": "asset-25",
+          "startTicks": 556,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1366",
+          "assetId": "asset-25",
+          "startTicks": 943,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1367",
+          "assetId": "asset-25",
+          "startTicks": 1529,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1368",
+          "assetId": "asset-25",
+          "startTicks": 1906,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1369",
+          "assetId": "asset-25",
+          "startTicks": 2866,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1370",
+          "assetId": "asset-25",
+          "startTicks": 3441,
+          "lengthTicks": 211,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1371",
+          "assetId": "asset-25",
+          "startTicks": 3652,
+          "lengthTicks": 174,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -13.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1372",
+          "assetId": "asset-25",
+          "startTicks": 3826,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1373",
+          "assetId": "asset-25",
+          "startTicks": 4387,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1374",
+          "assetId": "asset-25",
+          "startTicks": 4786,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1375",
+          "assetId": "asset-25",
+          "startTicks": 5351,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1376",
+          "assetId": "asset-25",
+          "startTicks": 5748,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1377",
+          "assetId": "asset-25",
+          "startTicks": 6305,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1378",
+          "assetId": "asset-25",
+          "startTicks": 6708,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1379",
+          "assetId": "asset-25",
+          "startTicks": 7669,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1380",
+          "assetId": "asset-25",
+          "startTicks": 8625,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1381",
+          "assetId": "asset-25",
+          "startTicks": 9161,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1382",
+          "assetId": "asset-25",
+          "startTicks": 9590,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1383",
+          "assetId": "asset-25",
+          "startTicks": 10549,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1384",
+          "assetId": "asset-25",
+          "startTicks": 11097,
+          "lengthTicks": 235,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1385",
+          "assetId": "asset-25",
+          "startTicks": 11332,
+          "lengthTicks": 176,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -12.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1386",
+          "assetId": "asset-25",
+          "startTicks": 11508,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1387",
+          "assetId": "asset-25",
+          "startTicks": 12032,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1388",
+          "assetId": "asset-25",
+          "startTicks": 12467,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1389",
+          "assetId": "asset-25",
+          "startTicks": 12995,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1390",
+          "assetId": "asset-25",
+          "startTicks": 13428,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1391",
+          "assetId": "asset-25",
+          "startTicks": 13962,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1392",
+          "assetId": "asset-25",
+          "startTicks": 14390,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1393",
+          "assetId": "asset-25",
+          "startTicks": 14926,
+          "lengthTicks": 254,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1394",
+          "assetId": "asset-25",
+          "startTicks": 15180,
+          "lengthTicks": 167,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -13.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1395",
+          "assetId": "asset-25",
+          "startTicks": 15347,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1396",
+          "assetId": "asset-25",
+          "startTicks": 15888,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1397",
+          "assetId": "asset-25",
+          "startTicks": 16309,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1398",
+          "assetId": "asset-25",
+          "startTicks": 16847,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1399",
+          "assetId": "asset-25",
+          "startTicks": 17265,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1400",
+          "assetId": "asset-25",
+          "startTicks": 17811,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1401",
+          "assetId": "asset-25",
+          "startTicks": 18228,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1402",
+          "assetId": "asset-25",
+          "startTicks": 18757,
+          "lengthTicks": 245,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1403",
+          "assetId": "asset-25",
+          "startTicks": 19002,
+          "lengthTicks": 185,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -12.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1404",
+          "assetId": "asset-25",
+          "startTicks": 19187,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1405",
+          "assetId": "asset-25",
+          "startTicks": 20145,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1406",
+          "assetId": "asset-25",
+          "startTicks": 20715,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1407",
+          "assetId": "asset-25",
+          "startTicks": 21104,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1408",
+          "assetId": "asset-25",
+          "startTicks": 21684,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1409",
+          "assetId": "asset-25",
+          "startTicks": 22067,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1410",
+          "assetId": "asset-25",
+          "startTicks": 22862,
+          "lengthTicks": 162,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -10.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1411",
+          "assetId": "asset-25",
+          "startTicks": 23024,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1412",
+          "assetId": "asset-25",
+          "startTicks": 23610,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1413",
+          "assetId": "asset-25",
+          "startTicks": 23990,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1414",
+          "assetId": "asset-25",
+          "startTicks": 24563,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1415",
+          "assetId": "asset-25",
+          "startTicks": 24944,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1416",
+          "assetId": "asset-25",
+          "startTicks": 25520,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1417",
+          "assetId": "asset-25",
+          "startTicks": 25909,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1418",
+          "assetId": "asset-25",
+          "startTicks": 26485,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1419",
+          "assetId": "asset-25",
+          "startTicks": 30709,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1420",
+          "assetId": "asset-25",
+          "startTicks": 31275,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1421",
+          "assetId": "asset-25",
+          "startTicks": 31668,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1422",
+          "assetId": "asset-25",
+          "startTicks": 32226,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1423",
+          "assetId": "asset-25",
+          "startTicks": 32627,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1424",
+          "assetId": "asset-25",
+          "startTicks": 33202,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1425",
+          "assetId": "asset-25",
+          "startTicks": 33588,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1426",
+          "assetId": "asset-25",
+          "startTicks": 34166,
+          "lengthTicks": 211,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1427",
+          "assetId": "asset-25",
+          "startTicks": 34377,
+          "lengthTicks": 165,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -11.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1428",
+          "assetId": "asset-25",
+          "startTicks": 34542,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1429",
+          "assetId": "asset-25",
+          "startTicks": 35117,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1430",
+          "assetId": "asset-25",
+          "startTicks": 35510,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1431",
+          "assetId": "asset-25",
+          "startTicks": 36063,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1432",
+          "assetId": "asset-25",
+          "startTicks": 36465,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1433",
+          "assetId": "asset-25",
+          "startTicks": 37018,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1434",
+          "assetId": "asset-25",
+          "startTicks": 37423,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1435",
+          "assetId": "asset-25",
+          "startTicks": 42223,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1436",
+          "assetId": "asset-25",
+          "startTicks": 42816,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1437",
+          "assetId": "asset-25",
+          "startTicks": 43187,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1438",
+          "assetId": "asset-25",
+          "startTicks": 43761,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1439",
+          "assetId": "asset-25",
+          "startTicks": 44148,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1440",
+          "assetId": "asset-25",
+          "startTicks": 44720,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1441",
+          "assetId": "asset-25",
+          "startTicks": 45106,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1442",
+          "assetId": "asset-25",
+          "startTicks": 45693,
+          "lengthTicks": 204,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1443",
+          "assetId": "asset-25",
+          "startTicks": 45897,
+          "lengthTicks": 168,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -12.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1444",
+          "assetId": "asset-25",
+          "startTicks": 46065,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1445",
+          "assetId": "asset-25",
+          "startTicks": 46645,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1446",
+          "assetId": "asset-25",
+          "startTicks": 47028,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1447",
+          "assetId": "asset-25",
+          "startTicks": 47598,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1448",
+          "assetId": "asset-25",
+          "startTicks": 47988,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1449",
+          "assetId": "asset-25",
+          "startTicks": 48556,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1450",
+          "assetId": "asset-25",
+          "startTicks": 48951,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1451",
+          "assetId": "asset-25",
+          "startTicks": 49527,
+          "lengthTicks": 211,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1452",
+          "assetId": "asset-25",
+          "startTicks": 49738,
+          "lengthTicks": 172,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -12.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1453",
+          "assetId": "asset-25",
+          "startTicks": 49910,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1454",
+          "assetId": "asset-25",
+          "startTicks": 50493,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1455",
+          "assetId": "asset-25",
+          "startTicks": 50867,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1456",
+          "assetId": "asset-25",
+          "startTicks": 51447,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1457",
+          "assetId": "asset-25",
+          "startTicks": 51829,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1458",
+          "assetId": "asset-25",
+          "startTicks": 52397,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1459",
+          "assetId": "asset-25",
+          "startTicks": 52790,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1460",
+          "assetId": "asset-25",
+          "startTicks": 53578,
+          "lengthTicks": 167,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -12.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1461",
+          "assetId": "asset-25",
+          "startTicks": 53745,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1462",
+          "assetId": "asset-25",
+          "startTicks": 54308,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1463",
+          "assetId": "asset-25",
+          "startTicks": 54708,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1464",
+          "assetId": "asset-25",
+          "startTicks": 55669,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1465",
+          "assetId": "asset-25",
+          "startTicks": 56231,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1466",
+          "assetId": "asset-25",
+          "startTicks": 56630,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1467",
+          "assetId": "asset-25",
+          "startTicks": 57201,
+          "lengthTicks": 211,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1468",
+          "assetId": "asset-25",
+          "startTicks": 57412,
+          "lengthTicks": 172,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -11.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1469",
+          "assetId": "asset-25",
+          "startTicks": 57584,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1470",
+          "assetId": "asset-25",
+          "startTicks": 58549,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1471",
+          "assetId": "asset-25",
+          "startTicks": 59134,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1472",
+          "assetId": "asset-25",
+          "startTicks": 59510,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1473",
+          "assetId": "asset-25",
+          "startTicks": 60082,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1474",
+          "assetId": "asset-25",
+          "startTicks": 60466,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1475",
+          "assetId": "asset-25",
+          "startTicks": 61060,
+          "lengthTicks": 194,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1476",
+          "assetId": "asset-25",
+          "startTicks": 61254,
+          "lengthTicks": 368,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -13.7,
+          "pitchSemitones": 0.0
+        }
+      ],
+      "effects": [
+        {
+          "id": "fx-809",
+          "type": "eq",
+          "bypassed": false,
+          "parameters": {
+            "band1.enabled": 1.0,
+            "band1.type": 0.0,
+            "band1.freq": 600.0,
+            "band1.gain": 0.0,
+            "band1.q": 0.707,
+            "band2.enabled": 1.0,
+            "band2.type": 1.0,
+            "band2.freq": 100.0,
+            "band2.gain": 0.0,
+            "band2.q": 0.707,
+            "band3.enabled": 1.0,
+            "band3.type": 2.0,
+            "band3.freq": 400.0,
+            "band3.gain": 0.0,
+            "band3.q": 0.707,
+            "band4.enabled": 1.0,
+            "band4.type": 2.0,
+            "band4.freq": 2000.0,
+            "band4.gain": 0.0,
+            "band4.q": 0.707,
+            "band5.enabled": 1.0,
+            "band5.type": 3.0,
+            "band5.freq": 8000.0,
+            "band5.gain": 0.0,
+            "band5.q": 0.707,
+            "band6.enabled": 0.0,
+            "band6.type": 4.0,
+            "band6.freq": 18000.0,
+            "band6.gain": 0.0,
+            "band6.q": 0.707,
+            "output": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "track-712",
+      "name": "GHOSTS",
+      "colour": 1,
+      "gainDb": -10.0,
+      "pan": -0.15,
+      "mute": false,
+      "solo": false,
+      "events": [
+        {
+          "id": "event-1315",
+          "assetId": "asset-5",
+          "startTicks": 740,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -9.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1316",
+          "assetId": "asset-5",
+          "startTicks": 1271,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -12.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1317",
+          "assetId": "asset-5",
+          "startTicks": 3515,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -10.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1318",
+          "assetId": "asset-5",
+          "startTicks": 4560,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1319",
+          "assetId": "asset-5",
+          "startTicks": 5113,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -10.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1320",
+          "assetId": "asset-5",
+          "startTicks": 7341,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -11.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1321",
+          "assetId": "asset-5",
+          "startTicks": 8973,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -10.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1322",
+          "assetId": "asset-5",
+          "startTicks": 10310,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -9.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1323",
+          "assetId": "asset-5",
+          "startTicks": 10782,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -12.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1324",
+          "assetId": "asset-5",
+          "startTicks": 13209,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -9.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1325",
+          "assetId": "asset-5",
+          "startTicks": 14143,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1326",
+          "assetId": "asset-5",
+          "startTicks": 14716,
+          "lengthTicks": 167,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -11.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1327",
+          "assetId": "asset-5",
+          "startTicks": 14883,
+          "lengthTicks": 309,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -9.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1328",
+          "assetId": "asset-5",
+          "startTicks": 15192,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1329",
+          "assetId": "asset-5",
+          "startTicks": 16075,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1330",
+          "assetId": "asset-5",
+          "startTicks": 18006,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1331",
+          "assetId": "asset-5",
+          "startTicks": 18858,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -10.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1332",
+          "assetId": "asset-5",
+          "startTicks": 19908,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1333",
+          "assetId": "asset-5",
+          "startTicks": 21827,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1334",
+          "assetId": "asset-5",
+          "startTicks": 22306,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -13.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1335",
+          "assetId": "asset-5",
+          "startTicks": 23755,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1336",
+          "assetId": "asset-5",
+          "startTicks": 26171,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -13.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1337",
+          "assetId": "asset-5",
+          "startTicks": 26570,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -10.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1338",
+          "assetId": "asset-5",
+          "startTicks": 30566,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -9.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1339",
+          "assetId": "asset-5",
+          "startTicks": 31452,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1340",
+          "assetId": "asset-5",
+          "startTicks": 33374,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -9.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1341",
+          "assetId": "asset-5",
+          "startTicks": 33855,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -11.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1342",
+          "assetId": "asset-5",
+          "startTicks": 36238,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1343",
+          "assetId": "asset-5",
+          "startTicks": 37211,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1344",
+          "assetId": "asset-5",
+          "startTicks": 38067,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -9.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1345",
+          "assetId": "asset-5",
+          "startTicks": 43907,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -10.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1346",
+          "assetId": "asset-5",
+          "startTicks": 45427,
+          "lengthTicks": 171,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -11.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1347",
+          "assetId": "asset-5",
+          "startTicks": 45598,
+          "lengthTicks": 158,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -9.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1348",
+          "assetId": "asset-5",
+          "startTicks": 45756,
+          "lengthTicks": 163,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -9.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1349",
+          "assetId": "asset-5",
+          "startTicks": 45919,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1350",
+          "assetId": "asset-5",
+          "startTicks": 47341,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -10.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1351",
+          "assetId": "asset-5",
+          "startTicks": 49193,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -13.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1352",
+          "assetId": "asset-5",
+          "startTicks": 49607,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -9.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1353",
+          "assetId": "asset-5",
+          "startTicks": 50634,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1354",
+          "assetId": "asset-5",
+          "startTicks": 51608,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1355",
+          "assetId": "asset-5",
+          "startTicks": 53027,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -13.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1356",
+          "assetId": "asset-5",
+          "startTicks": 54459,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1357",
+          "assetId": "asset-5",
+          "startTicks": 55434,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -9.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1358",
+          "assetId": "asset-5",
+          "startTicks": 56873,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -11.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1359",
+          "assetId": "asset-5",
+          "startTicks": 60244,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1360",
+          "assetId": "asset-5",
+          "startTicks": 60739,
+          "lengthTicks": 72,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -13.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1361",
+          "assetId": "asset-5",
+          "startTicks": 60811,
+          "lengthTicks": 158,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -11.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1362",
+          "assetId": "asset-5",
+          "startTicks": 60969,
+          "lengthTicks": 324,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -9.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1363",
+          "assetId": "asset-5",
+          "startTicks": 61293,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.0,
+          "pitchSemitones": 0.0
+        }
+      ],
+      "effects": [
+        {
+          "id": "fx-810",
+          "type": "eq",
+          "bypassed": false,
+          "parameters": {
+            "band1.enabled": 1.0,
+            "band1.type": 0.0,
+            "band1.freq": 350.0,
+            "band1.gain": 0.0,
+            "band1.q": 0.707,
+            "band2.enabled": 1.0,
+            "band2.type": 1.0,
+            "band2.freq": 100.0,
+            "band2.gain": 0.0,
+            "band2.q": 0.707,
+            "band3.enabled": 1.0,
+            "band3.type": 2.0,
+            "band3.freq": 400.0,
+            "band3.gain": 0.0,
+            "band3.q": 0.707,
+            "band4.enabled": 1.0,
+            "band4.type": 2.0,
+            "band4.freq": 2000.0,
+            "band4.gain": 0.0,
+            "band4.q": 0.707,
+            "band5.enabled": 1.0,
+            "band5.type": 3.0,
+            "band5.freq": 8000.0,
+            "band5.gain": 0.0,
+            "band5.q": 0.707,
+            "band6.enabled": 0.0,
+            "band6.type": 4.0,
+            "band6.freq": 18000.0,
+            "band6.gain": 0.0,
+            "band6.q": 0.707,
+            "output": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "track-713",
+      "name": "SNARE",
+      "colour": 1,
+      "gainDb": -1.0,
+      "pan": 0.0,
+      "mute": false,
+      "solo": false,
+      "events": [
+        {
+          "id": "event-1267",
+          "assetId": "asset-1",
+          "startTicks": 2903,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1268",
+          "assetId": "asset-1",
+          "startTicks": 4833,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1269",
+          "assetId": "asset-1",
+          "startTicks": 6747,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1270",
+          "assetId": "asset-1",
+          "startTicks": 8669,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1271",
+          "assetId": "asset-1",
+          "startTicks": 10583,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1272",
+          "assetId": "asset-1",
+          "startTicks": 12515,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1273",
+          "assetId": "asset-1",
+          "startTicks": 14435,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1274",
+          "assetId": "asset-1",
+          "startTicks": 15077,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1275",
+          "assetId": "asset-1",
+          "startTicks": 16342,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1276",
+          "assetId": "asset-1",
+          "startTicks": 18266,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1277",
+          "assetId": "asset-1",
+          "startTicks": 20191,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1278",
+          "assetId": "asset-1",
+          "startTicks": 22079,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1279",
+          "assetId": "asset-1",
+          "startTicks": 24019,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1280",
+          "assetId": "asset-1",
+          "startTicks": 25940,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1281",
+          "assetId": "asset-1",
+          "startTicks": 31714,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1282",
+          "assetId": "asset-1",
+          "startTicks": 33623,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1283",
+          "assetId": "asset-1",
+          "startTicks": 35554,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1284",
+          "assetId": "asset-1",
+          "startTicks": 37464,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1285",
+          "assetId": "asset-1",
+          "startTicks": 43237,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1286",
+          "assetId": "asset-1",
+          "startTicks": 45146,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1287",
+          "assetId": "asset-1",
+          "startTicks": 45792,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1288",
+          "assetId": "asset-1",
+          "startTicks": 47082,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1289",
+          "assetId": "asset-1",
+          "startTicks": 48996,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1290",
+          "assetId": "asset-1",
+          "startTicks": 50906,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1291",
+          "assetId": "asset-1",
+          "startTicks": 52835,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1292",
+          "assetId": "asset-1",
+          "startTicks": 54738,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1293",
+          "assetId": "asset-1",
+          "startTicks": 56680,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1294",
+          "assetId": "asset-1",
+          "startTicks": 58602,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1295",
+          "assetId": "asset-1",
+          "startTicks": 60523,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1296",
+          "assetId": "asset-1",
+          "startTicks": 61152,
+          "lengthTicks": 281,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.0,
+          "pitchSemitones": 0.0
+        }
+      ],
+      "effects": [
+        {
+          "id": "fx-804",
+          "type": "compressor",
+          "bypassed": false,
+          "parameters": {
+            "threshold": -26.0,
+            "ratio": 8.0,
+            "attack": 0.5,
+            "release": 70.0,
+            "knee": 2.0,
+            "makeup": 9.0,
+            "mix": 0.85
+          }
+        },
+        {
+          "id": "fx-805",
+          "type": "eq",
+          "bypassed": false,
+          "parameters": {
+            "band1.enabled": 1.0,
+            "band1.type": 0.0,
+            "band1.freq": 140.0,
+            "band1.gain": 0.0,
+            "band1.q": 0.707,
+            "band2.enabled": 1.0,
+            "band2.type": 1.0,
+            "band2.freq": 100.0,
+            "band2.gain": 0.0,
+            "band2.q": 0.707,
+            "band3.enabled": 1.0,
+            "band3.type": 2.0,
+            "band3.freq": 450.0,
+            "band3.gain": -4.0,
+            "band3.q": 0.707,
+            "band4.enabled": 1.0,
+            "band4.type": 2.0,
+            "band4.freq": 2600.0,
+            "band4.gain": 5.0,
+            "band4.q": 0.8,
+            "band5.enabled": 1.0,
+            "band5.type": 3.0,
+            "band5.freq": 8000.0,
+            "band5.gain": 0.0,
+            "band5.q": 0.707,
+            "band6.enabled": 0.0,
+            "band6.type": 4.0,
+            "band6.freq": 18000.0,
+            "band6.gain": 0.0,
+            "band6.q": 0.707,
+            "output": 0.0
+          }
+        },
+        {
+          "id": "fx-806",
+          "type": "reverb",
+          "bypassed": false,
+          "parameters": {
+            "mix": 0.14,
+            "predelay": 20.0,
+            "decay": 0.7,
+            "size": 0.3,
+            "damping": 0.5,
+            "lowcut": 120.0,
+            "width": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "track-714",
+      "name": "CLAP",
+      "colour": 1,
+      "gainDb": -14.0,
+      "pan": 0.0,
+      "mute": false,
+      "solo": false,
+      "events": [
+        {
+          "id": "event-1297",
+          "assetId": "asset-48",
+          "startTicks": 2947,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1298",
+          "assetId": "asset-48",
+          "startTicks": 4870,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1299",
+          "assetId": "asset-48",
+          "startTicks": 6772,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1300",
+          "assetId": "asset-48",
+          "startTicks": 10615,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1301",
+          "assetId": "asset-48",
+          "startTicks": 14470,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1302",
+          "assetId": "asset-48",
+          "startTicks": 18296,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1303",
+          "assetId": "asset-48",
+          "startTicks": 20211,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1304",
+          "assetId": "asset-48",
+          "startTicks": 22141,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1305",
+          "assetId": "asset-48",
+          "startTicks": 25985,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1306",
+          "assetId": "asset-48",
+          "startTicks": 33650,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1307",
+          "assetId": "asset-48",
+          "startTicks": 35583,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1308",
+          "assetId": "asset-48",
+          "startTicks": 37486,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1309",
+          "assetId": "asset-48",
+          "startTicks": 45169,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1310",
+          "assetId": "asset-48",
+          "startTicks": 49005,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1311",
+          "assetId": "asset-48",
+          "startTicks": 50953,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1312",
+          "assetId": "asset-48",
+          "startTicks": 52855,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1313",
+          "assetId": "asset-48",
+          "startTicks": 56704,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1314",
+          "assetId": "asset-48",
+          "startTicks": 60545,
+          "lengthTicks": 292,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.4,
+          "pitchSemitones": 0.0
+        }
+      ],
+      "effects": []
+    },
+    {
+      "id": "track-715",
+      "name": "KICK",
+      "colour": 0,
+      "gainDb": -1.0,
+      "pan": 0.0,
+      "mute": false,
+      "solo": false,
+      "events": [
+        {
+          "id": "event-1203",
+          "assetId": "asset-7",
+          "startTicks": 20,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1204",
+          "assetId": "asset-7",
+          "startTicks": 773,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1205",
+          "assetId": "asset-7",
+          "startTicks": 2283,
+          "lengthTicks": 391,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1206",
+          "assetId": "asset-7",
+          "startTicks": 2674,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1207",
+          "assetId": "asset-7",
+          "startTicks": 3856,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1208",
+          "assetId": "asset-7",
+          "startTicks": 5488,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1209",
+          "assetId": "asset-7",
+          "startTicks": 6283,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1210",
+          "assetId": "asset-7",
+          "startTicks": 7090,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1211",
+          "assetId": "asset-7",
+          "startTicks": 7697,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1212",
+          "assetId": "asset-7",
+          "startTicks": 8365,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1213",
+          "assetId": "asset-7",
+          "startTicks": 9874,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1214",
+          "assetId": "asset-7",
+          "startTicks": 10293,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1215",
+          "assetId": "asset-7",
+          "startTicks": 11160,
+          "lengthTicks": 385,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1216",
+          "assetId": "asset-7",
+          "startTicks": 11545,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1217",
+          "assetId": "asset-7",
+          "startTicks": 12280,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1218",
+          "assetId": "asset-7",
+          "startTicks": 13788,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1219",
+          "assetId": "asset-7",
+          "startTicks": 14756,
+          "lengthTicks": 332,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1220",
+          "assetId": "asset-7",
+          "startTicks": 15088,
+          "lengthTicks": 291,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1221",
+          "assetId": "asset-7",
+          "startTicks": 15379,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1222",
+          "assetId": "asset-7",
+          "startTicks": 16124,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1223",
+          "assetId": "asset-7",
+          "startTicks": 17633,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1224",
+          "assetId": "asset-7",
+          "startTicks": 18055,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1225",
+          "assetId": "asset-7",
+          "startTicks": 19212,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1226",
+          "assetId": "asset-7",
+          "startTicks": 20827,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1227",
+          "assetId": "asset-7",
+          "startTicks": 21629,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1228",
+          "assetId": "asset-7",
+          "startTicks": 22450,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1229",
+          "assetId": "asset-7",
+          "startTicks": 23059,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1230",
+          "assetId": "asset-7",
+          "startTicks": 23734,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1231",
+          "assetId": "asset-7",
+          "startTicks": 25233,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1232",
+          "assetId": "asset-7",
+          "startTicks": 25646,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1233",
+          "assetId": "asset-7",
+          "startTicks": 26507,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1234",
+          "assetId": "asset-7",
+          "startTicks": 30431,
+          "lengthTicks": 312,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1235",
+          "assetId": "asset-7",
+          "startTicks": 30743,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.9,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1236",
+          "assetId": "asset-7",
+          "startTicks": 31470,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1237",
+          "assetId": "asset-7",
+          "startTicks": 32990,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1238",
+          "assetId": "asset-7",
+          "startTicks": 33407,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1239",
+          "assetId": "asset-7",
+          "startTicks": 34574,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1240",
+          "assetId": "asset-7",
+          "startTicks": 36192,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1241",
+          "assetId": "asset-7",
+          "startTicks": 37002,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1242",
+          "assetId": "asset-7",
+          "startTicks": 37814,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1243",
+          "assetId": "asset-7",
+          "startTicks": 41965,
+          "lengthTicks": 289,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1244",
+          "assetId": "asset-7",
+          "startTicks": 42254,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1245",
+          "assetId": "asset-7",
+          "startTicks": 43008,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1246",
+          "assetId": "asset-7",
+          "startTicks": 44535,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1247",
+          "assetId": "asset-7",
+          "startTicks": 45471,
+          "lengthTicks": 316,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1248",
+          "assetId": "asset-7",
+          "startTicks": 45787,
+          "lengthTicks": 310,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1249",
+          "assetId": "asset-7",
+          "startTicks": 46097,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1250",
+          "assetId": "asset-7",
+          "startTicks": 46855,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1251",
+          "assetId": "asset-7",
+          "startTicks": 48356,
+          "lengthTicks": 395,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1252",
+          "assetId": "asset-7",
+          "startTicks": 48751,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1253",
+          "assetId": "asset-7",
+          "startTicks": 49935,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1254",
+          "assetId": "asset-7",
+          "startTicks": 51572,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -5.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1255",
+          "assetId": "asset-7",
+          "startTicks": 52363,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.4,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1256",
+          "assetId": "asset-7",
+          "startTicks": 53152,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -7.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1257",
+          "assetId": "asset-7",
+          "startTicks": 53776,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1258",
+          "assetId": "asset-7",
+          "startTicks": 54430,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.8,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1259",
+          "assetId": "asset-7",
+          "startTicks": 55969,
+          "lengthTicks": 383,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1260",
+          "assetId": "asset-7",
+          "startTicks": 56352,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -2.7,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1261",
+          "assetId": "asset-7",
+          "startTicks": 57240,
+          "lengthTicks": 379,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -8.1,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1262",
+          "assetId": "asset-7",
+          "startTicks": 57619,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -0.5,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1263",
+          "assetId": "asset-7",
+          "startTicks": 58361,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -4.6,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1264",
+          "assetId": "asset-7",
+          "startTicks": 59885,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -1.2,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1265",
+          "assetId": "asset-7",
+          "startTicks": 60848,
+          "lengthTicks": 311,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -3.3,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1266",
+          "assetId": "asset-7",
+          "startTicks": 61159,
+          "lengthTicks": 398,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": -6.4,
+          "pitchSemitones": 0.0
+        }
+      ],
+      "effects": [
+        {
+          "id": "fx-807",
+          "type": "compressor",
+          "bypassed": false,
+          "parameters": {
+            "threshold": -20.0,
+            "ratio": 5.0,
+            "attack": 8.0,
+            "release": 60.0,
+            "knee": 6.0,
+            "makeup": 5.0,
+            "mix": 1.0
+          }
+        },
+        {
+          "id": "fx-808",
+          "type": "eq",
+          "bypassed": false,
+          "parameters": {
+            "band1.enabled": 1.0,
+            "band1.type": 0.0,
+            "band1.freq": 35.0,
+            "band1.gain": 0.0,
+            "band1.q": 0.707,
+            "band2.enabled": 1.0,
+            "band2.type": 1.0,
+            "band2.freq": 65.0,
+            "band2.gain": 3.0,
+            "band2.q": 0.707,
+            "band3.enabled": 1.0,
+            "band3.type": 2.0,
+            "band3.freq": 300.0,
+            "band3.gain": -5.0,
+            "band3.q": 0.707,
+            "band4.enabled": 1.0,
+            "band4.type": 2.0,
+            "band4.freq": 2000.0,
+            "band4.gain": 0.0,
+            "band4.q": 0.707,
+            "band5.enabled": 1.0,
+            "band5.type": 3.0,
+            "band5.freq": 8000.0,
+            "band5.gain": 0.0,
+            "band5.q": 0.707,
+            "band6.enabled": 0.0,
+            "band6.type": 4.0,
+            "band6.freq": 18000.0,
+            "band6.gain": 0.0,
+            "band6.q": 0.707,
+            "output": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "track-716",
+      "name": "BASS 1",
+      "colour": 4,
+      "gainDb": -5.0,
+      "pan": 0.0,
+      "mute": false,
+      "solo": false,
+      "events": [
+        {
+          "id": "event-1120",
+          "assetId": "asset-107",
+          "startTicks": 0,
+          "lengthTicks": 940,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1122",
+          "assetId": "asset-107",
+          "startTicks": 7680,
+          "lengthTicks": 940,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1123",
+          "assetId": "asset-107",
+          "startTicks": 15360,
+          "lengthTicks": 940,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1127",
+          "assetId": "asset-107",
+          "startTicks": 23040,
+          "lengthTicks": 940,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1128",
+          "assetId": "asset-107",
+          "startTicks": 30720,
+          "lengthTicks": 940,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1132",
+          "assetId": "asset-107",
+          "startTicks": 38400,
+          "lengthTicks": 940,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1155",
+          "assetId": "asset-107",
+          "startTicks": 46080,
+          "lengthTicks": 940,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1160",
+          "assetId": "asset-107",
+          "startTicks": 53760,
+          "lengthTicks": 940,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        }
+      ],
+      "effects": [
+        {
+          "id": "fx-813",
+          "type": "eq",
+          "bypassed": false,
+          "parameters": {
+            "band1.enabled": 0.0,
+            "band1.type": 0.0,
+            "band1.freq": 30.0,
+            "band1.gain": 0.0,
+            "band1.q": 0.707,
+            "band2.enabled": 1.0,
+            "band2.type": 1.0,
+            "band2.freq": 80.0,
+            "band2.gain": 3.0,
+            "band2.q": 0.707,
+            "band3.enabled": 1.0,
+            "band3.type": 2.0,
+            "band3.freq": 400.0,
+            "band3.gain": 0.0,
+            "band3.q": 0.707,
+            "band4.enabled": 1.0,
+            "band4.type": 2.0,
+            "band4.freq": 2000.0,
+            "band4.gain": 0.0,
+            "band4.q": 0.707,
+            "band5.enabled": 1.0,
+            "band5.type": 3.0,
+            "band5.freq": 8000.0,
+            "band5.gain": 0.0,
+            "band5.q": 0.707,
+            "band6.enabled": 1.0,
+            "band6.type": 4.0,
+            "band6.freq": 2500.0,
+            "band6.gain": 0.0,
+            "band6.q": 0.707,
+            "output": 0.0
+          }
+        },
+        {
+          "id": "fx-814",
+          "type": "compressor",
+          "bypassed": false,
+          "parameters": {
+            "threshold": -20.0,
+            "ratio": 4.0,
+            "attack": 5.0,
+            "release": 150.0,
+            "knee": 6.0,
+            "makeup": 4.0,
+            "mix": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "track-717",
+      "name": "BASS 2",
+      "colour": 4,
+      "gainDb": -5.0,
+      "pan": 0.0,
+      "mute": false,
+      "solo": false,
+      "events": [
+        {
+          "id": "event-1121",
+          "assetId": "asset-110",
+          "startTicks": 6720,
+          "lengthTicks": 1037,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1124",
+          "assetId": "asset-110",
+          "startTicks": 14400,
+          "lengthTicks": 1037,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1125",
+          "assetId": "asset-110",
+          "startTicks": 22080,
+          "lengthTicks": 1037,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1129",
+          "assetId": "asset-110",
+          "startTicks": 29760,
+          "lengthTicks": 1037,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1130",
+          "assetId": "asset-110",
+          "startTicks": 37440,
+          "lengthTicks": 1037,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1134",
+          "assetId": "asset-110",
+          "startTicks": 45120,
+          "lengthTicks": 1037,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1157",
+          "assetId": "asset-110",
+          "startTicks": 52800,
+          "lengthTicks": 1037,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1161",
+          "assetId": "asset-110",
+          "startTicks": 60480,
+          "lengthTicks": 1037,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        }
+      ],
+      "effects": [
+        {
+          "id": "fx-815",
+          "type": "eq",
+          "bypassed": false,
+          "parameters": {
+            "band1.enabled": 0.0,
+            "band1.type": 0.0,
+            "band1.freq": 30.0,
+            "band1.gain": 0.0,
+            "band1.q": 0.707,
+            "band2.enabled": 1.0,
+            "band2.type": 1.0,
+            "band2.freq": 80.0,
+            "band2.gain": 3.0,
+            "band2.q": 0.707,
+            "band3.enabled": 1.0,
+            "band3.type": 2.0,
+            "band3.freq": 400.0,
+            "band3.gain": 0.0,
+            "band3.q": 0.707,
+            "band4.enabled": 1.0,
+            "band4.type": 2.0,
+            "band4.freq": 2000.0,
+            "band4.gain": 0.0,
+            "band4.q": 0.707,
+            "band5.enabled": 1.0,
+            "band5.type": 3.0,
+            "band5.freq": 8000.0,
+            "band5.gain": 0.0,
+            "band5.q": 0.707,
+            "band6.enabled": 1.0,
+            "band6.type": 4.0,
+            "band6.freq": 2500.0,
+            "band6.gain": 0.0,
+            "band6.q": 0.707,
+            "output": 0.0
+          }
+        },
+        {
+          "id": "fx-816",
+          "type": "compressor",
+          "bypassed": false,
+          "parameters": {
+            "threshold": -20.0,
+            "ratio": 4.0,
+            "attack": 5.0,
+            "release": 150.0,
+            "knee": 6.0,
+            "makeup": 4.0,
+            "mix": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "track-718",
+      "name": "BASS 3",
+      "colour": 4,
+      "gainDb": -7.0,
+      "pan": 0.0,
+      "mute": false,
+      "solo": false,
+      "events": [
+        {
+          "id": "event-924",
+          "assetId": "asset-113",
+          "startTicks": 4320,
+          "lengthTicks": 2160,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1126",
+          "assetId": "asset-113",
+          "startTicks": 19680,
+          "lengthTicks": 2160,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1131",
+          "assetId": "asset-113",
+          "startTicks": 35040,
+          "lengthTicks": 2160,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1159",
+          "assetId": "asset-113",
+          "startTicks": 50400,
+          "lengthTicks": 2160,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1162",
+          "assetId": "asset-113",
+          "startTicks": 58080,
+          "lengthTicks": 2160,
+          "sourceOffsetSeconds": 0.0,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        }
+      ],
+      "effects": [
+        {
+          "id": "fx-817",
+          "type": "eq",
+          "bypassed": false,
+          "parameters": {
+            "band1.enabled": 0.0,
+            "band1.type": 0.0,
+            "band1.freq": 30.0,
+            "band1.gain": 0.0,
+            "band1.q": 0.707,
+            "band2.enabled": 1.0,
+            "band2.type": 1.0,
+            "band2.freq": 80.0,
+            "band2.gain": 3.0,
+            "band2.q": 0.707,
+            "band3.enabled": 1.0,
+            "band3.type": 2.0,
+            "band3.freq": 400.0,
+            "band3.gain": 0.0,
+            "band3.q": 0.707,
+            "band4.enabled": 1.0,
+            "band4.type": 2.0,
+            "band4.freq": 2000.0,
+            "band4.gain": 0.0,
+            "band4.q": 0.707,
+            "band5.enabled": 1.0,
+            "band5.type": 3.0,
+            "band5.freq": 8000.0,
+            "band5.gain": 0.0,
+            "band5.q": 0.707,
+            "band6.enabled": 1.0,
+            "band6.type": 4.0,
+            "band6.freq": 2500.0,
+            "band6.gain": 0.0,
+            "band6.q": 0.707,
+            "output": 0.0
+          }
+        },
+        {
+          "id": "fx-818",
+          "type": "compressor",
+          "bypassed": false,
+          "parameters": {
+            "threshold": -20.0,
+            "ratio": 4.0,
+            "attack": 5.0,
+            "release": 150.0,
+            "knee": 6.0,
+            "makeup": 4.0,
+            "mix": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "track-1183",
+      "name": "55hz sine wave",
+      "colour": 3,
+      "gainDb": -8.5,
+      "pan": 0.0,
+      "mute": false,
+      "solo": false,
+      "events": [
+        {
+          "id": "event-1184",
+          "assetId": "asset-1182",
+          "startTicks": 1440,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1185",
+          "assetId": "asset-1182",
+          "startTicks": 1920,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": -1.0
+        },
+        {
+          "id": "event-1186",
+          "assetId": "asset-1182",
+          "startTicks": 9120,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1187",
+          "assetId": "asset-1182",
+          "startTicks": 9600,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": -1.0
+        },
+        {
+          "id": "event-1188",
+          "assetId": "asset-1182",
+          "startTicks": 16800,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1189",
+          "assetId": "asset-1182",
+          "startTicks": 17280,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": -1.0
+        },
+        {
+          "id": "event-1190",
+          "assetId": "asset-1182",
+          "startTicks": 24480,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1191",
+          "assetId": "asset-1182",
+          "startTicks": 24960,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": -1.0
+        },
+        {
+          "id": "event-1192",
+          "assetId": "asset-1182",
+          "startTicks": 32160,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1193",
+          "assetId": "asset-1182",
+          "startTicks": 32640,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": -1.0
+        },
+        {
+          "id": "event-1194",
+          "assetId": "asset-1182",
+          "startTicks": 39840,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1195",
+          "assetId": "asset-1182",
+          "startTicks": 40320,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": -1.0
+        },
+        {
+          "id": "event-1196",
+          "assetId": "asset-1182",
+          "startTicks": 47520,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1197",
+          "assetId": "asset-1182",
+          "startTicks": 48000,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": -1.0
+        },
+        {
+          "id": "event-1198",
+          "assetId": "asset-1182",
+          "startTicks": 55200,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1199",
+          "assetId": "asset-1182",
+          "startTicks": 55680,
+          "lengthTicks": 480,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": -1.0
+        }
+      ],
+      "effects": [
+        {
+          "id": "fx-1202",
+          "type": "reverb",
+          "bypassed": false,
+          "parameters": {
+            "mix": 0.494,
+            "predelay": 20.0,
+            "decay": 0.59332,
+            "size": 0.5,
+            "damping": 0.5,
+            "lowcut": 20.96487,
+            "width": 1.0
+          }
+        },
+        {
+          "id": "fx-1200",
+          "type": "distortion",
+          "bypassed": false,
+          "parameters": {
+            "type": 1.0,
+            "drive": 12.0,
+            "bias": 0.1,
+            "lowcut": 20.0,
+            "tone": 12000.0,
+            "bits": 16.0,
+            "downsample": 1.0,
+            "autogain": 1.0,
+            "mix": 0.34,
+            "output": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "track-721",
+      "name": "SCRATCH",
+      "colour": 5,
+      "gainDb": -11.0,
+      "pan": 0.35,
+      "mute": false,
+      "solo": false,
+      "events": [
+        {
+          "id": "event-1137",
+          "assetId": "asset-607",
+          "startTicks": 0,
+          "lengthTicks": 348,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1138",
+          "assetId": "asset-607",
+          "startTicks": 480,
+          "lengthTicks": 711,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": -1.0
+        },
+        {
+          "id": "event-834",
+          "assetId": "asset-607",
+          "startTicks": 3280,
+          "lengthTicks": 600,
+          "sourceOffsetSeconds": 5.2989,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1142",
+          "assetId": "asset-607",
+          "startTicks": 26880,
+          "lengthTicks": 393,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1143",
+          "assetId": "asset-607",
+          "startTicks": 27360,
+          "lengthTicks": 387,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": -1.0
+        },
+        {
+          "id": "event-1144",
+          "assetId": "asset-607",
+          "startTicks": 30160,
+          "lengthTicks": 600,
+          "sourceOffsetSeconds": 5.2989,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1151",
+          "assetId": "asset-607",
+          "startTicks": 38400,
+          "lengthTicks": 348,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        },
+        {
+          "id": "event-1152",
+          "assetId": "asset-607",
+          "startTicks": 38880,
+          "lengthTicks": 348,
+          "sourceOffsetSeconds": 0.0,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": -1.0
+        },
+        {
+          "id": "event-1153",
+          "assetId": "asset-607",
+          "startTicks": 41680,
+          "lengthTicks": 600,
+          "sourceOffsetSeconds": 5.2989,
+          "looping": false,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        }
+      ],
+      "effects": [
+        {
+          "id": "fx-831",
+          "type": "eq",
+          "bypassed": false,
+          "parameters": {
+            "band1.enabled": 1.0,
+            "band1.type": 0.0,
+            "band1.freq": 250.0,
+            "band1.gain": 0.0,
+            "band1.q": 0.707,
+            "band2.enabled": 1.0,
+            "band2.type": 1.0,
+            "band2.freq": 100.0,
+            "band2.gain": 0.0,
+            "band2.q": 0.707,
+            "band3.enabled": 1.0,
+            "band3.type": 2.0,
+            "band3.freq": 400.0,
+            "band3.gain": 0.0,
+            "band3.q": 0.707,
+            "band4.enabled": 1.0,
+            "band4.type": 2.0,
+            "band4.freq": 2000.0,
+            "band4.gain": 0.0,
+            "band4.q": 0.707,
+            "band5.enabled": 1.0,
+            "band5.type": 3.0,
+            "band5.freq": 8000.0,
+            "band5.gain": 0.0,
+            "band5.q": 0.707,
+            "band6.enabled": 0.0,
+            "band6.type": 4.0,
+            "band6.freq": 18000.0,
+            "band6.gain": 0.0,
+            "band6.q": 0.707,
+            "output": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "track-1117",
+      "name": "voicel'ss2s2",
+      "colour": 4,
+      "gainDb": -4.0,
+      "pan": 0.0,
+      "mute": false,
+      "solo": false,
+      "events": [
+        {
+          "id": "event-1118",
+          "assetId": "asset-169",
+          "startTicks": 3840,
+          "lengthTicks": 54240,
+          "sourceOffsetSeconds": 6.227581521739131,
+          "looping": true,
+          "gainDb": 0.0,
+          "pitchSemitones": 0.0
+        }
+      ],
+      "effects": [
+        {
+          "id": "fx-1482",
+          "type": "reverb",
+          "bypassed": false,
+          "parameters": {
+            "mix": 0.058,
+            "predelay": 20.0,
+            "decay": 1.8,
+            "size": 0.5,
+            "damping": 0.5,
+            "lowcut": 120.0,
+            "width": 1.0
+          }
+        }
+      ]
+    }
+  ]
+}

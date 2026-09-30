@@ -1,0 +1,140 @@
+# MCP DAW - continuous build and releases.
+#
+#  * Every push to main and every pull request: build + test on Windows and Linux (Ubuntu 22.04),
+#    check the demo, and make the Windows zip (downloadable from the run's "Artifacts" for 90 days).
+#  * Pushing a version tag (git tag v0.4.0 && git push origin v0.4.0): the same, then a DRAFT
+#    GitHub Release with the zip attached. Check it on the Releases page and press "Publish".
+#
+# JUCE is fetched at the exact commit pinned in CMakeLists.txt (MCPDAW_JUCE_TAG), shallowly.
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:        # "Run workflow" button on the Actions tab
+
+permissions:
+  contents: read
+
+concurrency:                # a newer push cancels an older run of the same branch
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Windows - build, test, package
+    runs-on: windows-latest     # Visual Studio 2022+ with MSVC
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the pinned JUCE commit
+        id: juce
+        shell: bash
+        run: echo "sha=$(grep -oP 'set\(MCPDAW_JUCE_TAG \K[0-9a-f]{40}' CMakeLists.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Get JUCE
+        uses: actions/checkout@v4
+        with:
+          repository: juce-framework/JUCE
+          ref: ${{ steps.juce.outputs.sha }}
+          path: third_party/JUCE
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build and test (Release)
+        shell: cmd
+        env:
+          JUCE_PATH: ${{ github.workspace }}\third_party\JUCE
+        run: scripts\build-windows.cmd Release
+
+      - name: Check the demo (every sample present, exact file names)
+        run: python tools/make_demo.py check
+
+      - name: Package the app zip
+        shell: bash
+        run: |
+          pip install markdown
+          python tools/package_release.py --build build/Release \
+            --source-url "${{ github.server_url }}/${{ github.repository }}" --ref "${{ github.ref_name }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MCP-DAW-win64
+          path: dist/*.zip
+          if-no-files-found: error
+
+  linux:
+    name: Linux (Ubuntu 22.04) - build, test
+    runs-on: ubuntu-22.04       # the oldest Linux we support (gcc 11)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the pinned JUCE commit
+        id: juce
+        run: echo "sha=$(grep -oP 'set\(MCPDAW_JUCE_TAG \K[0-9a-f]{40}' CMakeLists.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Get JUCE
+        uses: actions/checkout@v4
+        with:
+          repository: juce-framework/JUCE
+          ref: ${{ steps.juce.outputs.sha }}
+          path: third_party/JUCE
+
+      - name: Install build dependencies (as in docs/BUILDING.md)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ninja-build pkg-config \
+            libasound2-dev libfreetype-dev libfontconfig1-dev \
+            libx11-dev libxcomposite-dev libxcursor-dev libxext-dev \
+            libxinerama-dev libxrandr-dev libxrender-dev
+
+      - name: Build
+        run: |
+          cmake --version
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DJUCE_PATH="$PWD/third_party/JUCE"
+          cmake --build build
+
+      - name: Test
+        run: build/mcpdaw_tests_artefacts/Release/mcpdaw_tests
+
+      - name: Check the demo (Linux file names are case-sensitive)
+        run: python3 tools/make_demo.py check
+
+  release:
+    name: Draft GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: MCP-DAW-win64
+          path: dist
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          # The "## <version>" section of the changelog, up to the next "## " heading.
+          awk -v v="$version" '/^## /{p = ($2 == v)} p' CHANGELOG.md | tail -n +2 > notes.md
+          {
+            echo
+            echo "**Download:** \`$(basename dist/*.zip)\` below - unzip and open **Quick Start.html**."
+            echo "Windows 10/11 64-bit. Linux: build from source (docs/BUILDING.md)."
+          } >> notes.md
+          test -s notes.md
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: MCP DAW ${{ github.ref_name }}
+          body_path: notes.md
+          files: dist/*.zip
+          draft: true
+          prerelease: ${{ contains(github.ref_name, '-') || startsWith(github.ref_name, 'v0.') }}

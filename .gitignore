@@ -1,0 +1,13 @@
+/build*/
+/dist/
+/third_party/JUCE/
+*.user
+*.log
+*.wav
+*.mcpdaw
+__pycache__/
+
+# The demo's songs and samples, and the Samples Starter Kit, ship with the repo
+!/demo/samples/*.wav
+!/Samples-Starter-Kit/*.wav
+!/demo/kens-demo-*.mcpdaw

@@ -1,0 +1,11 @@
+Demo samples
+============
+
+Ken selected these from his old library of samples and recordings from 20 years ago.
+
+Licence
+-------
+These samples are by Make Tech Pty Ltd and are not covered by MCP DAW's software licence (AGPL).
+You may use them free of charge in your own music and productions, commercial or not, with no
+credit required. You may not sell or redistribute the samples themselves, on their own or as part
+of another sample pack or library.
