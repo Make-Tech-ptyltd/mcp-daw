@@ -41,8 +41,10 @@ public:
         Returns whatever the edit function returns. Throws on failure; nothing is changed then. */
     juce::var apply (const juce::String& label, const std::function<juce::var (Project&)>& edit);
 
-    /** Replace the whole project (new/open). Clears undo history. */
-    void replaceProject (Project, juce::File file = {});
+    /** Replace the whole project (new/open). Clears undo history. `loadedFormatVersion` is the file
+        format version the project was read from (open); an older version marks the project as
+        upgraded in memory, which protects the original file (see saveNeedsNewFile). */
+    void replaceProject (Project, juce::File file = {}, int loadedFormatVersion = Project::kFormatVersion);
 
     // --- undo -----------------------------------------------------------------------------------
     bool canUndo() const noexcept { return ! undoStack.empty(); }
@@ -68,11 +70,30 @@ public:
 
     // --- file state -----------------------------------------------------------------------------
     juce::File currentFile() const { return file; }
-    void markSaved (const juce::File& f) { file = f; savedRevision = revision; notify (false); }
+    /** A successful save. Saving an upgraded project to any file ends the upgrade protection. */
+    void markSaved (const juce::File& f) { file = f; savedRevision = revision; upgradedFrom = 0; notify (false); }
+
+    // --- project format migration ---------------------------------------------------------------
+    /** The older format version this project was opened from (and upgraded in memory), or 0 when
+        the project is current (new, or opened from a current-format file, or saved since). */
+    int upgradedFromVersion() const noexcept { return upgradedFrom; }
+    /** True while an upgraded project still points at its older-format original: an ordinary Save
+        must not silently replace that file - it has to go to a new file (Save As), or to the
+        original only with an explicit, confirmed overwrite. */
+    bool saveNeedsNewFile() const noexcept { return upgradedFrom > 0 && file != juce::File(); }
+    /** "<original name>-v<current format>.mcpdaw" next to the original (made unique if it exists). */
+    juce::File suggestedUpgradedFile() const;
     bool isDirty() const noexcept { return revision != savedRevision; }
     juce::int64 getRevision() const noexcept { return revision; }
     /** Increments whenever the whole project is replaced (new/open) - lets views reset zoom etc. */
     int getLoadCount() const noexcept { return loadCount; }
+
+    // --- application editing preferences (not part of the project, not undoable) ------------------
+    /** Default declick time in ms: the minimum effective duration of every event fade (Fades.h). */
+    double defaultDeclickMs() const noexcept { return declickMs; }
+    /** Clamped to 0..kMaxDeclickMs. Listeners hear editingPreferencesChanged() (the engine rebuilds its
+        playback plan; the GUI stores the preference). */
+    void setDefaultDeclickMs (double ms);
 
     // --- collaborators --------------------------------------------------------------------------
     TransportControl* transport = nullptr;       // null in headless tests
@@ -82,6 +103,7 @@ public:
     {
         virtual ~Listener() = default;
         virtual void projectChanged (const Project&, bool structural) = 0;
+        virtual void editingPreferencesChanged() {}
     };
     void addListener (Listener* l) { listeners.add (l); }
     void removeListener (Listener* l) { listeners.remove (l); }
@@ -101,6 +123,8 @@ private:
     juce::int64 revision = 0, savedRevision = 0, nextRevision = 1;
     juce::File file;
     int loadCount = 0;
+    int upgradedFrom = 0;
+    double declickMs = kDefaultDeclickMs;
     juce::ListenerList<Listener> listeners;
 
     void notify (bool structural);

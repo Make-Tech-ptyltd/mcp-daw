@@ -1,6 +1,6 @@
 # MCP DAW tools
 
-Generated from MCP DAW by Make Tech 0.4.0 by `tools/gen_tool_reference.py` — 55 tools. Positions and lengths are **beats** (zero-based quarter notes; bar N starts at beat (N−1)×4), levels are **dB**, pan is −1…+1. From Python: `daw.call("<tool>", arg=value, ...)`.
+Generated from MCP DAW by Make Tech 0.5.0 by `tools/gen_tool_reference.py` — 61 tools. Positions and lengths are **beats** (zero-based quarter notes; bar N starts at beat (N−1)×4), levels are **dB**, pan is −1…+1. From Python: `daw.call("<tool>", arg=value, ...)`.
 
 ## Inspect
 
@@ -199,7 +199,7 @@ Declare the native tempo of an asset (0 = not tempo-based / one-shot).
 
 ### `create_event`
 
-Place an asset on a track. Overlapped parts of existing events on that track are replaced (loop-arranger overwrite, like painting over tape).
+Place an asset on a track. Overlapped parts of existing events on that track are replaced (loop-arranger overwrite, like painting over tape). Optional fades are set in the same step, e.g. a vocal at bar 9 with a two-beat fade-in -> {startBeat: 32, fadeInBeats: 2}. Without fades the event still gets the tiny anti-click fade set by the Default declick time preference.
 
 - `trackId` — string. Track id.
 - `assetId` — string. Asset id.
@@ -208,6 +208,12 @@ Place an asset on a track. Overlapped parts of existing events on that track are
 - `looping` *(optional)* — boolean. Repeat the source to fill the event (default: true for loops, false for one-shots / files under 2 s without tempo).
 - `sourceOffsetSeconds` *(optional)* — number (0.0..). Start point inside the source.
 - `pitchSemitones` *(optional)* — number (-12.0..12.0). Transpose, -12..+12 semitones (varispeed like a sampler: +12 = octave up, twice as fast).
+- `gainDb` *(optional)* — number (-70.0..12.0). Event gain in dB (default 0).
+- `reversed` *(optional)* — boolean. Play the event backwards (non-destructive; default false).
+- `fadeInBeats` *(optional)* — number (0.0..). Fade-in length in beats (default 0 = only the declick; clipped to the event length).
+- `fadeOutBeats` *(optional)* — number (0.0..). Fade-out length in beats (default 0 = only the declick; clipped to the event length).
+- `fadeInCurve` *(optional)* — `linear` | `smooth` | `fast` | `slow`. Fade-in curve (default linear).
+- `fadeOutCurve` *(optional)* — `linear` | `smooth` | `fast` | `slow`. Fade-out curve (default linear).
 
 ### `move_event`
 
@@ -264,9 +270,10 @@ Enable/disable looping (repetition of the source) for an event.
 
 ### `set_event_gain`
 
-Set per-event gain in dB.
+Set event gain in dB (per-event volume; -70 = silent, max +12) on one event (eventId) or several (eventIds) as one undo step.
 
-- `eventId` — string. Event id.
+- `eventId` *(optional)* — string. Event id.
+- `eventIds` *(optional)* — array. Several events (alternative to eventId).
 - `db` — number (-70.0..12.0). Gain in dB.
 
 ### `set_event_pitch`
@@ -275,6 +282,62 @@ Transpose one or more events by -12..+12 semitones (fractions allowed for detune
 
 - `eventIds` — array. Events to transpose.
 - `semitones` — number (-12.0..12.0). Pitch in semitones (0 = original).
+
+### `set_event_fades`
+
+Set event fades on one or more events: fade-in/fade-out length in beats and curve (linear, smooth, fast, slow) for each edge. Every argument is optional, so you can change one property and leave the rest, e.g. {eventIds:[...], fadeOutBeats:2}. Fade-in and fade-out may overlap (they multiply). 0 means no deliberate fade: the edge still gets the tiny anti-click fade set by the Default declick time preference (see get_project_state editing.defaultDeclickMs). Lengths beyond an event are clipped to it.
+
+- `eventIds` — array. Events to change.
+- `fadeInBeats` *(optional)* — number (0.0..). Fade-in length in beats.
+- `fadeOutBeats` *(optional)* — number (0.0..). Fade-out length in beats.
+- `fadeInCurve` *(optional)* — `linear` | `smooth` | `fast` | `slow`. Fade-in curve.
+- `fadeOutCurve` *(optional)* — `linear` | `smooth` | `fast` | `slow`. Fade-out curve.
+
+### `set_event_reverse`
+
+Reverse event playback on or off for one or more events (explicit state). Non-destructive: the audio file is not changed and other events using it are unaffected. A reversed event plays the same stretch of audio it shows, back to front; fades, gain, looping, trimming and pitch all still apply.
+
+- `eventIds` — array. Events to change.
+- `enabled` — boolean. true = reversed, false = forwards.
+
+### `slip_event`
+
+Slip edit: move the source audio underneath an event while the event stays where it is (start, length and track unchanged; only sourceOffsetSeconds changes). deltaBeats moves the audio later (positive = to the right) by that many beats of timeline; or give the absolute sourceOffsetSeconds. Pitch (varispeed) and reverse are accounted for. Looping events wrap around their source; one-shots are kept within their source (a relative move stops at the edge).
+
+- `eventId` — string. Event id.
+- `deltaBeats` *(optional)* — number. Relative slip in beats (positive = audio moves right / later).
+- `sourceOffsetSeconds` *(optional)* — number (0.0..). Absolute source offset (alternative to deltaBeats).
+
+## Loop metadata (WAV files)
+
+### `get_wav_loop_metadata`
+
+Inspect a WAV file's ACID-compatible loop metadata (type loop/one-shot, tempo, beats, time signature, root note, stretch) and check it against the file's real duration (expected = beats * 60 / bpm). Also says whether write_wav_loop_metadata can safely edit the file (conventional RIFF/WAVE only).
+
+- `path` — string. Absolute .wav path.
+
+### `write_wav_loop_metadata`
+
+Embed Loop Metadata: write ACID-compatible loop metadata into a WAV file without touching its audio (the PCM data chunk is copied byte for byte and verified by SHA-256). Safest: give outputPath to save a copy. Updating the file in place needs overwrite=true. Unspecified fields keep the file's existing values. Loops need bpm (20..300) and beats; check durationMatches in the result. Conventional RIFF/WAVE only (RF64/Wave64 are refused). Assets already in the project keep their current tempo (use set_asset_bpm).
+
+- `path` — string. Absolute path of the source .wav.
+- `outputPath` *(optional)* — string. Write a copy here instead of updating the source.
+- `overwrite` *(optional)* — boolean. Required to update the source in place, or to replace an existing outputPath.
+- `type` *(optional)* — `loop` | `one-shot`. loop (tempo-based, may be stretched) or one-shot.
+- `bpm` *(optional)* — number (0.0..300.0). Tempo the material was played at.
+- `beats` *(optional)* — integer (0.0..65535.0). Musical length in beats.
+- `numerator` *(optional)* — integer (1.0..32.0). Time signature numerator (default 4).
+- `denominator` *(optional)* — integer (1.0..32.0). Time signature denominator (default 4).
+- `rootNote` *(optional)* — integer (-1.0..127.0). Root key as a MIDI note (60 = C4); -1 = none.
+- `stretch` *(optional)* — boolean. Loop may be tempo-matched (default true for loops).
+
+## Preferences
+
+### `set_default_declick`
+
+Application preference (not part of the project, not undoable): the Default declick time in milliseconds, 0..20 (default 1.5). Every event fade renders at least this long, so edges never click; 0 gives genuinely hard event edges. Current value: get_project_state editing.defaultDeclickMs.
+
+- `ms` — number (0.0..20.0). Declick time in milliseconds.
 
 ## Arrangement
 

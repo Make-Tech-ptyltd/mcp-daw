@@ -69,6 +69,7 @@ public:
 
     // --- ProjectController::Listener ---------------------------------------------------------------
     void projectChanged (const Project&, bool structural) override;
+    void editingPreferencesChanged() override;
 
 private:
     /** Anything handed to the audio thread and later retired back. */

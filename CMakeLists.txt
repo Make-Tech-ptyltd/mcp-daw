@@ -9,7 +9,7 @@
 #   mcp-daw-bridge   tiny stdio <-> named-pipe bridge an MCP client launches (lazy: see src/mcp/Bridge.h).
 #   mcpdaw_manifest  build-time generator of the tool list the bridge serves while MCP DAW is closed.
 cmake_minimum_required(VERSION 3.25)
-project(MCPDAW VERSION 0.4.0 LANGUAGES C CXX)
+project(MCPDAW VERSION 0.5.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,6 +43,7 @@ add_library(mcpdaw_juce STATIC)
 target_link_libraries(mcpdaw_juce
     PRIVATE
         juce::juce_audio_utils
+        juce::juce_cryptography
         juce::juce_dsp
     PUBLIC
         juce::juce_recommended_config_flags)
@@ -83,7 +84,9 @@ endif()
 # ---------------------------------------------------------------------------------------------
 add_library(mcpdaw_core STATIC
     src/core/MusicalTime.h
+    src/core/Fades.h
     src/core/Project.h                src/core/Project.cpp
+    src/core/WavLoopMetadata.h        src/core/WavLoopMetadata.cpp
     src/core/AudioAsset.h             src/core/AudioAsset.cpp
     src/core/EffectCatalogue.h        src/core/EffectCatalogue.cpp
     src/core/ProjectJson.h            src/core/ProjectJson.cpp
@@ -143,6 +146,7 @@ target_sources(MCPDAW PRIVATE
     src/ui/MixerPanel.h               src/ui/MixerPanel.cpp
     src/ui/FxRackPanel.h              src/ui/FxRackPanel.cpp
     src/ui/BrowserPanel.h             src/ui/BrowserPanel.cpp
+    src/ui/EditingDialogs.h           src/ui/EditingDialogs.cpp
     src/ui/MainComponent.h            src/ui/MainComponent.cpp)
 target_link_libraries(MCPDAW PRIVATE mcpdaw_core mcpdaw_assets mcpdaw_warnings)
 set_target_properties(MCPDAW PROPERTIES FOLDER "mcpdaw")
@@ -216,6 +220,8 @@ if(MCPDAW_BUILD_TESTS)
         tests/McpTests.cpp
         tests/BridgeTests.cpp
         tests/ScriptTests.cpp
+        tests/EditingTests.cpp
+        tests/WavMetadataTests.cpp
         "${MCPDAW_MANIFEST_CPP}")
     add_dependencies(mcpdaw_tests mcpdaw_manifest_gen)
     target_link_libraries(mcpdaw_tests PRIVATE mcpdaw_core mcpdaw_warnings)

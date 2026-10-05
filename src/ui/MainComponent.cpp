@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // MCP DAW - Copyright (C) 2026 Make Tech Pty Ltd (maketech.com.au). See LICENSE.
 #include "MainComponent.h"
+#include "EditingDialogs.h"
 #include "mcp/PipeName.h"
 #include "app/AppLinks.h"
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -13,7 +14,7 @@ enum Command : juce::CommandID
 {
     cmdNew = 1, cmdOpen, cmdSave, cmdSaveAs, cmdImport, cmdRender, cmdAudioSettings,
     cmdUndo = 100, cmdRedo, cmdCut, cmdCopy, cmdPaste, cmdDelete, cmdSplit, cmdDuplicate, cmdSelectAll, cmdToggleLooping,
-    cmdLoopToSelection, cmdNudgeLeft, cmdNudgeRight, cmdAddTrack,
+    cmdLoopToSelection, cmdNudgeLeft, cmdNudgeRight, cmdAddTrack, cmdReverse, cmdEditingPrefs, cmdEmbedLoopMetadata,
     cmdPlayStop = 200, cmdStop, cmdRewind, cmdToggleLoop, cmdGoToEnd,
     cmdZoomIn = 300, cmdZoomOut, cmdZoomFit, cmdFollow, cmdShowBrowser, cmdShowFx, cmdShowMixer, cmdDetachBrowser, cmdDetachFx, cmdDetachMixer,
     cmdMcpHelp = 400
@@ -37,6 +38,7 @@ MainComponent::MainComponent (AppContext& a, juce::AudioDeviceManager& d, McpPip
     fxPanel.setHeaderComponent (&fxRack.headerComponent());
 
     transport.onAudioSettings = [this] { showAudioSettings(); };
+    timeline.onEmbedLoopMetadata = [this] (const juce::File& wav) { showLoopMetadata (wav); };
     browser.onAddFile = [this] (const juce::File& f) { addFileAtCursor (f); };
     app.onStatus = [this] (const juce::String& text, bool isError)
     {
@@ -85,8 +87,50 @@ void MainComponent::projectChanged (const Project& p, bool)
 {
     // Keep a track selected so the FX rack always has something sensible to show.
     if (p.findTrack (app.selectedTrack) == nullptr && ! p.tracks.empty()) app.selectTrack (p.tracks.front().id);
+    // A project just opened from an older format (by the menu, a double-click or an MCP client):
+    // offer to save the upgraded project as a new current-format file.
+    if (app.controller.getLoadCount() != seenLoadCount)
+    {
+        seenLoadCount = app.controller.getLoadCount();
+        if (app.controller.upgradedFromVersion() > 0)
+            juce::MessageManager::callAsync ([safe = juce::Component::SafePointer<MainComponent> (this)] { if (safe != nullptr) safe->showUpgradeNotice(); });
+    }
     updateTitle();
     commands.commandStatusChanged();
+}
+
+void MainComponent::editingPreferencesChanged()
+{
+    // Persist the Default declick time (an application preference, never stored in projects).
+    if (auto* props = app.properties.getUserSettings())
+    {
+        props->setValue ("editing.declickMs", app.controller.defaultDeclickMs());
+        props->saveIfNeeded();
+    }
+    timeline.repaint();
+}
+
+void MainComponent::showUpgradeNotice()
+{
+    const int from = app.controller.upgradedFromVersion();
+    if (from <= 0 || upgradeNoticeOpen) return;   // one notice at a time (an MCP client may open several projects)
+    upgradeNoticeOpen = true;
+    const auto suggested = app.controller.suggestedUpgradedFile();
+    auto options = juce::MessageBoxOptions().withIconType (juce::MessageBoxIconType::InfoIcon)
+                       .withTitle ("OLDER PROJECT FORMAT")
+                       .withMessage ("This project was created using MCP DAW project format v" + juce::String (from) + ".\n\n"
+                                     "It has been opened successfully and upgraded to the current format (v" + juce::String (Project::kFormatVersion) + ").\n\n"
+                                     "We recommend saving the upgraded project as a new file so the original remains compatible with "
+                                     "the older version.\n\nSuggested: " + suggested.getFileName())
+                       .withButton ("Save Upgraded Copy...").withButton ("Not Now").withAssociatedComponent (this);
+    juce::AlertWindow::showAsync (options, [safe = juce::Component::SafePointer<MainComponent> (this)] (int result)
+    {
+        if (safe == nullptr) return;
+        safe->upgradeNoticeOpen = false;
+        if (safe->app.controller.upgradedFromVersion() <= 0) return;   // saved or replaced meanwhile
+        if (result == 1) safe->saveUpgradedCopy();
+        else safe->app.status ("Older project format: Save will ask for a new file name, so the original stays untouched");
+    });
 }
 
 void MainComponent::updateMcpStatus()
@@ -100,7 +144,9 @@ void MainComponent::updateMcpStatus()
 juce::String MainComponent::fileStatusText() const
 {
     const auto file = app.controller.currentFile();
-    return (file == juce::File() ? juce::String ("Unsaved project") : file.getFullPathName()) + (app.controller.isDirty() ? "  (modified)" : "");
+    return (file == juce::File() ? juce::String ("Unsaved project") : file.getFullPathName()) + (app.controller.isDirty() ? "  (modified)" : "")
+         + (app.controller.saveNeedsNewFile() ? "  (older format v" + juce::String (app.controller.upgradedFromVersion()) + ": save as a new file)"
+                                              : juce::String());
 }
 
 void MainComponent::layoutStatusBar()
@@ -146,7 +192,7 @@ void MainComponent::paint (juce::Graphics& g)
     if (ticker.isActive()) return;   // MCP commands are streaming: the ticker has this space
     g.setColour (statusIsError ? colours::red : colours::textDim);
     g.drawText (statusText.isNotEmpty() ? statusText
-                                        : juce::String ("Space play/stop  |  drag right edge to loop  |  drag empty lane to paint, Ctrl+drag to select  |  S split  |  Ctrl+wheel zoom"),
+                                        : juce::String ("Space play/stop  |  drag right edge to loop  |  top corners fade, top line gain  |  Alt+drag slip, Shift no snap  |  U reverse  |  S split  |  Ctrl+wheel zoom"),
                 text, juce::Justification::centredLeft, true);
     g.setColour (colours::textFaint.withAlpha (0.7f));
     g.setFont (fonts::ui (11.0f));
@@ -170,9 +216,10 @@ juce::Image MainComponent::snapshot()
 // ================================================================================================
 // Files
 // ================================================================================================
-void MainComponent::chooseFile (const juce::String& title, const juce::String& patterns, bool saving, std::function<void (const juce::File&)> then)
+void MainComponent::chooseFile (const juce::String& title, const juce::String& patterns, bool saving, std::function<void (const juce::File&)> then,
+                                const juce::File& startIn)
 {
-    auto start = app.controller.currentFile();
+    auto start = startIn != juce::File() ? startIn : app.controller.currentFile();
     if (start == juce::File()) start = juce::File::getSpecialLocation (juce::File::userDocumentsDirectory);
     chooser = std::make_unique<juce::FileChooser> (title, start, patterns);
     const int flags = saving ? juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::warnAboutOverwriting
@@ -187,6 +234,13 @@ void MainComponent::chooseFile (const juce::String& title, const juce::String& p
 void MainComponent::save (std::function<void()> after)
 {
     if (app.controller.currentFile() == juce::File()) { saveAs (std::move (after)); return; }
+    if (app.controller.saveNeedsNewFile())
+    {
+        // Never silently replace an older-format original: the first Save becomes "Save Upgraded Copy".
+        app.status ("This project came from an older format - choose a name for the upgraded copy");
+        saveUpgradedCopy (std::move (after));
+        return;
+    }
     if (app.run ("save_project").isObject())
     {
         app.status ("Saved " + app.controller.currentFile().getFileName());
@@ -205,6 +259,22 @@ void MainComponent::saveAs (std::function<void()> after)
             if (after) after();
         }
     });
+}
+
+void MainComponent::saveUpgradedCopy (std::function<void()> after)
+{
+    const auto suggested = app.controller.suggestedUpgradedFile();
+    chooseFile ("Save upgraded copy (format v" + juce::String (Project::kFormatVersion) + ")", "*.mcpdaw", true, [this, after] (const juce::File& f)
+    {
+        // The save dialog has already asked "replace?" if this file exists - including the original - so
+        // the overwrite is explicit and confirmed.
+        if (app.run ("save_project", makeObject ({ { "path", f.withFileExtension ("mcpdaw").getFullPathName() }, { "overwrite", true } })).isObject())
+        {
+            app.status ("Saved upgraded project as " + app.controller.currentFile().getFileName());
+            updateTitle();
+            if (after) after();
+        }
+    }, suggested);
 }
 
 void MainComponent::confirmDiscard (std::function<void()> proceed)
@@ -286,6 +356,39 @@ private:
 };
 
 } // namespace
+
+void MainComponent::showEditingPreferences()
+{
+    if (preferencesWindow != nullptr) { preferencesWindow->toFront (true); return; }
+    preferencesWindow = std::make_unique<ToolWindow> ("Editing preferences", new EditingPreferencesPanel (app), [this]
+    {
+        juce::MessageManager::callAsync ([this] { preferencesWindow.reset(); });
+    });
+    preferencesWindow->centreAroundComponent (this, 520, 250);
+    preferencesWindow->setVisible (true);
+}
+
+void MainComponent::showLoopMetadata (const juce::File& wav)
+{
+    loopMetadataWindow.reset();   // one at a time: reopening shows the newly chosen file
+    loopMetadataWindow = std::make_unique<ToolWindow> ("Embed Loop Metadata", new LoopMetadataPanel (app, wav), [this]
+    {
+        juce::MessageManager::callAsync ([this] { loopMetadataWindow.reset(); });
+    });
+    loopMetadataWindow->centreAroundComponent (this, 560, 470);
+    loopMetadataWindow->setVisible (true);
+}
+
+void MainComponent::chooseLoopMetadataFile()
+{
+    const auto start = app.browserFolder.isDirectory() ? app.browserFolder : juce::File::getSpecialLocation (juce::File::userMusicDirectory);
+    chooser = std::make_unique<juce::FileChooser> ("Embed Loop Metadata - choose a WAV file", start, "*.wav");
+    chooser->launchAsync (juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                          [this] (const juce::FileChooser& fc)
+    {
+        if (fc.getResult().existsAsFile()) showLoopMetadata (fc.getResult());
+    });
+}
 
 void MainComponent::showAudioSettings()
 {
@@ -507,7 +610,7 @@ void MainComponent::getAllCommands (juce::Array<juce::CommandID>& c)
 {
     c.addArray ({ cmdNew, cmdOpen, cmdSave, cmdSaveAs, cmdImport, cmdRender, cmdAudioSettings,
                   cmdUndo, cmdRedo, cmdCut, cmdCopy, cmdPaste, cmdDelete, cmdSplit, cmdDuplicate, cmdSelectAll, cmdToggleLooping,
-                  cmdLoopToSelection, cmdNudgeLeft, cmdNudgeRight, cmdAddTrack,
+                  cmdLoopToSelection, cmdNudgeLeft, cmdNudgeRight, cmdAddTrack, cmdReverse, cmdEditingPrefs, cmdEmbedLoopMetadata,
                   cmdPlayStop, cmdStop, cmdRewind, cmdToggleLoop, cmdGoToEnd,
                   cmdZoomIn, cmdZoomOut, cmdZoomFit, cmdFollow, cmdShowBrowser, cmdShowFx, cmdShowMixer, cmdDetachBrowser, cmdDetachFx, cmdDetachMixer,
                   cmdMcpHelp });
@@ -527,6 +630,9 @@ void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommand
         case cmdImport:   info.setInfo ("Import audio...", "", "File", 0); info.addDefaultKeypress ('i', ctrl); break;
         case cmdRender:   info.setInfo ("Render mix to WAV...", "", "File", 0); info.addDefaultKeypress ('r', ctrl); break;
         case cmdAudioSettings: info.setInfo ("Audio settings...", "", "File", 0); break;
+        case cmdEmbedLoopMetadata: info.setInfo ("Embed Loop Metadata...", "Writes ACID-compatible loop metadata into a WAV file.", "File", 0); break;
+        case cmdEditingPrefs: info.setInfo ("Editing preferences (default declick)...", "", "Edit", 0); break;
+        case cmdReverse:  info.setInfo ("Reverse selected events", "", "Edit", 0); info.setActive (sel); info.addDefaultKeypress ('u', 0); break;
 
         case cmdUndo:
             info.setInfo (app.controller.canUndo() ? "Undo " + app.controller.undoLabel() : juce::String ("Undo"), "", "Edit", 0);
@@ -594,6 +700,9 @@ bool MainComponent::perform (const InvocationInfo& info)
         case cmdImport:   importAudio(); break;
         case cmdRender:   renderMix(); break;
         case cmdAudioSettings: showAudioSettings(); break;
+        case cmdEmbedLoopMetadata: chooseLoopMetadataFile(); break;
+        case cmdEditingPrefs: showEditingPreferences(); break;
+        case cmdReverse:  timeline.toggleSelectionReverse(); break;
         case cmdUndo:     app.run ("undo"); break;
         case cmdRedo:     app.run ("redo"); break;
         case cmdCut:      timeline.cutSelection(); break;
@@ -643,9 +752,9 @@ juce::PopupMenu MainComponent::getMenuForIndex (int index, const juce::String&)
     auto add = [&] (std::initializer_list<int> ids) { for (int id : ids) { if (id == 0) m.addSeparator(); else m.addCommandItem (&commands, id); } };
     switch (index)
     {
-        case 0: add ({ cmdNew, cmdOpen, cmdSave, cmdSaveAs, 0, cmdImport, cmdRender, 0, cmdAudioSettings }); break;
-        case 1: add ({ cmdUndo, cmdRedo, 0, cmdCut, cmdCopy, cmdPaste, cmdDelete, 0, cmdSplit, cmdDuplicate, cmdToggleLooping, cmdSelectAll,
-                       0, cmdLoopToSelection, cmdNudgeLeft, cmdNudgeRight, 0, cmdAddTrack }); break;
+        case 0: add ({ cmdNew, cmdOpen, cmdSave, cmdSaveAs, 0, cmdImport, cmdRender, cmdEmbedLoopMetadata, 0, cmdAudioSettings }); break;
+        case 1: add ({ cmdUndo, cmdRedo, 0, cmdCut, cmdCopy, cmdPaste, cmdDelete, 0, cmdSplit, cmdDuplicate, cmdToggleLooping, cmdReverse, cmdSelectAll,
+                       0, cmdLoopToSelection, cmdNudgeLeft, cmdNudgeRight, 0, cmdAddTrack, 0, cmdEditingPrefs }); break;
         case 2: add ({ cmdPlayStop, cmdStop, cmdRewind, cmdGoToEnd, 0, cmdToggleLoop }); break;
         case 3: add ({ cmdZoomIn, cmdZoomOut, cmdZoomFit, cmdFollow, 0, cmdShowBrowser, cmdShowFx, cmdShowMixer, 0, cmdDetachBrowser, cmdDetachFx, cmdDetachMixer }); break;
         case 4:

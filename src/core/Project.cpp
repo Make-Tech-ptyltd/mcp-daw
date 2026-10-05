@@ -173,6 +173,8 @@ void validateProject (const Project& p)
             require (finiteIn (e.sourceOffsetSeconds, 0.0, 1.0e6), "Event " + e.id + " source offset must be >= 0");
             require (finiteIn (e.gainDb, kMinDb, kMaxDb), "Event " + e.id + " gain out of range");
             require (finiteIn (e.pitchSemitones, -kMaxPitchSemitones, kMaxPitchSemitones), "Event " + e.id + " pitch must be -12..+12 semitones");
+            require (e.fadeInTicks >= 0 && e.fadeInTicks <= e.length && e.fadeOutTicks >= 0 && e.fadeOutTicks <= e.length,
+                     "Event " + e.id + " fades must be between 0 and the event length");
         }
         validateChain (t.effects, ids, "Track " + t.id);
     }

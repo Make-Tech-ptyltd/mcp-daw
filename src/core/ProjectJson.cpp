@@ -130,7 +130,7 @@ juce::var assetJson (const Asset& a)
     return o;
 }
 
-juce::var eventJson (const Project& p, const Event& e)
+juce::var eventJson (const Project& p, const Event& e, double declickMs)
 {
     const auto* a = p.findAsset (e.assetId);
     const Tick cycle = sourceCycleTicks (p, e);
@@ -138,8 +138,19 @@ juce::var eventJson (const Project& p, const Event& e)
                            { "startBeat", ticksToBeats (e.start) }, { "lengthBeats", ticksToBeats (e.length) },
                            { "endBeat", ticksToBeats (e.end()) },
                            { "start", formatBarBeat (e.start) }, { "end", formatBarBeat (e.end()) },
-                           { "looping", e.looping }, { "sourceOffsetSeconds", e.sourceOffsetSeconds },
-                           { "gainDb", e.gainDb }, { "pitchSemitones", e.pitchSemitones } });
+                           { "looping", e.looping }, { "reversed", e.reversed }, { "sourceOffsetSeconds", e.sourceOffsetSeconds },
+                           { "gainDb", e.gainDb }, { "pitchSemitones", e.pitchSemitones },
+                           { "fadeInBeats", ticksToBeats (e.fadeInTicks) }, { "fadeOutBeats", ticksToBeats (e.fadeOutTicks) },
+                           { "fadeInCurve", fadeCurveName (e.fadeInCurve) }, { "fadeOutCurve", fadeCurveName (e.fadeOutCurve) } });
+    if (declickMs >= 0.0)
+    {
+        // What the renderer actually applies: the musical fade, or the Default declick time if longer
+        // (never more than the event itself). Derived, never stored.
+        const double lengthMs = ticksToSeconds (e.length, p.bpm) * 1000.0;
+        auto effective = [&] (Tick fade) { return std::min (lengthMs, std::max (ticksToSeconds (fade, p.bpm) * 1000.0, declickMs)); };
+        o.getDynamicObject()->setProperty ("effectiveFadeInMs", effective (e.fadeInTicks));
+        o.getDynamicObject()->setProperty ("effectiveFadeOutMs", effective (e.fadeOutTicks));
+    }
     if (cycle > 0)
     {
         o.getDynamicObject()->setProperty ("sourceCycleBeats", ticksToBeats (cycle));
@@ -148,33 +159,37 @@ juce::var eventJson (const Project& p, const Event& e)
     return o;
 }
 
-juce::var trackJson (const Project& p, const Track& t)
+juce::var trackJson (const Project& p, const Track& t, double declickMs)
 {
     std::vector<const Event*> sorted;
     for (const auto& e : t.events) sorted.push_back (&e);
     std::sort (sorted.begin(), sorted.end(), [] (auto* a, auto* b) { return a->start < b->start; });
 
     juce::Array<juce::var> events;
-    for (const auto* e : sorted) events.add (eventJson (p, *e));
+    for (const auto* e : sorted) events.add (eventJson (p, *e, declickMs));
     const bool audible = ! t.mute && (! p.anySolo() || t.solo);
     return makeObject ({ { "id", t.id }, { "name", t.name }, { "index", p.trackIndex (t.id) }, { "colour", t.colour },
                          { "gainDb", t.gainDb }, { "pan", t.pan }, { "mute", t.mute }, { "solo", t.solo }, { "audible", audible },
                          { "occupiedBars", occupiedBars (t) }, { "events", events }, { "effects", chainJson (t.effects, false) } });
 }
 
-juce::var projectStateJson (const Project& p)
+juce::var projectStateJson (const Project& p, double declickMs)
 {
     juce::Array<juce::var> assets, tracks;
     for (const auto& a : p.assets) assets.add (assetJson (a));
-    for (const auto& t : p.tracks) tracks.add (trackJson (p, t));
+    for (const auto& t : p.tracks) tracks.add (trackJson (p, t, declickMs));
     const Tick end = p.contentEnd();
-    return makeObject ({
+    auto state = makeObject ({
         { "name", p.name }, { "bpm", p.bpm }, { "timeSignature", "4/4" }, { "ticksPerBeat", static_cast<int> (kTicksPerBeat) },
         { "positionUnits", "zero-based beats (quarter notes); bar N starts at beat (N-1)*4" },
         { "lengthBeats", ticksToBeats (end) }, { "lengthBars", static_cast<double> (end) / kTicksPerBar },
         { "loop", makeObject ({ { "enabled", p.loopEnabled }, { "startBeat", ticksToBeats (p.loopStart) }, { "endBeat", ticksToBeats (p.loopEnd) } }) },
         { "master", makeObject ({ { "gainDb", p.master.gainDb }, { "effects", chainJson (p.master.effects, false) } }) },
         { "assets", assets }, { "tracks", tracks } });
+    if (declickMs >= 0.0)
+        state.getDynamicObject()->setProperty ("editing", makeObject ({ { "defaultDeclickMs", declickMs },
+            { "note", "Event fades never render shorter than defaultDeclickMs (an application preference, not saved in the project)" } }));
+    return state;
 }
 
 // ================================================================================================
@@ -236,7 +251,10 @@ juce::var projectToFileJson (const Project& p, const juce::File& dir)
         for (const auto& e : t.events)
             events.add (makeObject ({ { "id", e.id }, { "assetId", e.assetId }, { "startTicks", e.start }, { "lengthTicks", e.length },
                                       { "sourceOffsetSeconds", e.sourceOffsetSeconds }, { "looping", e.looping },
-                                      { "gainDb", e.gainDb }, { "pitchSemitones", e.pitchSemitones } }));
+                                      { "gainDb", e.gainDb }, { "pitchSemitones", e.pitchSemitones },
+                                      { "fadeInTicks", e.fadeInTicks }, { "fadeOutTicks", e.fadeOutTicks },
+                                      { "fadeInCurve", fadeCurveName (e.fadeInCurve) }, { "fadeOutCurve", fadeCurveName (e.fadeOutCurve) },
+                                      { "reversed", e.reversed } }));
         tracks.add (makeObject ({ { "id", t.id }, { "name", t.name }, { "colour", t.colour }, { "gainDb", t.gainDb }, { "pan", t.pan },
                                   { "mute", t.mute }, { "solo", t.solo }, { "events", events }, { "effects", chainFileJson (t.effects) } }));
     }
@@ -249,7 +267,7 @@ juce::var projectToFileJson (const Project& p, const juce::File& dir)
         { "assets", assets }, { "tracks", tracks } });
 }
 
-Project projectFromFileJson (const juce::var& json, const juce::File& dir, const AssetLoader& loaderIn)
+Project projectFromFileJson (const juce::var& json, const juce::File& dir, const AssetLoader& loaderIn, int* formatVersionRead)
 {
     const AssetLoader loader = loaderIn ? loaderIn : AssetLoader ([] (const juce::File& f) { return loadAudioFile (f); });
     JsonArgs root (json, "project");
@@ -308,6 +326,21 @@ Project projectFromFileJson (const juce::var& json, const juce::File& dir, const
             e.looping = je.boolean ("looping");
             e.gainDb = je.optNumber ("gainDb", kMinDb, kMaxDb).value_or (0.0);
             e.pitchSemitones = je.optNumber ("pitchSemitones", -kMaxPitchSemitones, kMaxPitchSemitones).value_or (0.0);
+            // Format v2 fields. Optional on read, so v1 files (and hand-written ones) get the defaults:
+            // no musical fades, linear curves, forwards.
+            e.fadeInTicks = je.has ("fadeInTicks") ? je.integer ("fadeInTicks", 0, kMaxProjectTicks) : 0;
+            e.fadeOutTicks = je.has ("fadeOutTicks") ? je.integer ("fadeOutTicks", 0, kMaxProjectTicks) : 0;
+            auto curve = [&] (const char* key)
+            {
+                const auto name = je.optString (key).value_or ("linear");
+                const auto c = fadeCurveFromName (name.toRawUTF8());
+                if (! c) je.fail ("'" + juce::String (key) + "' must be linear, smooth, fast or slow");
+                return *c;
+            };
+            e.fadeInCurve = curve ("fadeInCurve");
+            e.fadeOutCurve = curve ("fadeOutCurve");
+            e.reversed = je.optBoolean ("reversed").value_or (false);
+            e.clampFades();
             t.events.push_back (std::move (e));
         }
         t.effects = chainFromJson (j, "effects");
@@ -315,6 +348,7 @@ Project projectFromFileJson (const juce::var& json, const juce::File& dir, const
     }
 
     validateProject (p);
+    if (formatVersionRead != nullptr) *formatVersionRead = static_cast<int> (version);
     return p;
 }
 
@@ -330,13 +364,13 @@ void saveProjectFile (const Project& p, const juce::File& file)
         throw std::runtime_error (("Could not replace " + file.getFullPathName()).toStdString());
 }
 
-Project loadProjectFile (const juce::File& file, const AssetLoader& loader)
+Project loadProjectFile (const juce::File& file, const AssetLoader& loader, int* formatVersionRead)
 {
     if (! file.existsAsFile()) throw std::runtime_error (("Project file not found: " + file.getFullPathName()).toStdString());
     if (file.getSize() > 64 * 1024 * 1024) throw std::runtime_error ("Project file is implausibly large (>64 MiB)");
     juce::var json;
     const auto result = juce::JSON::parse (file.loadFileAsString(), json);
     if (result.failed()) throw std::runtime_error (("Invalid JSON in project file: " + result.getErrorMessage()).toStdString());
-    return projectFromFileJson (json, file.getParentDirectory(), loader);
+    return projectFromFileJson (json, file.getParentDirectory(), loader, formatVersionRead);
 }
 } // namespace mcpdaw

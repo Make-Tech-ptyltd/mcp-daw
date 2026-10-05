@@ -5,7 +5,7 @@ work on **together, in the same project, live**. You drag, loop and mix by hand;
 same through MCP (Model Context Protocol) while you watch — and every change it makes can be undone.
 
 Free and open source, built by Make Tech Pty Ltd — [maketech.com.au](https://maketech.com.au).
-Version 0.4.0 (public beta), Windows 10/11 64-bit.
+Version 0.5.0 (public beta), Windows 10/11 64-bit.
 
 ---
 
@@ -58,16 +58,26 @@ File → Open to see how it is put together, or ask your AI to remix it.
 
 * **Add sounds:** drag WAV files from the Browser panel (left) or Windows Explorer onto the arrangement.
   The Browser starts in the **Samples Starter Kit** (it's also under *Places*): click a file to hear it.
-* **Loop:** drag the **right edge** of a clip to repeat it. Drag in an **empty lane** to paint the
-  track's sound along it.
-* **Move / copy:** drag a clip; hold **Ctrl** to copy, **Alt** to ignore the grid.
+* **Loop:** drag the **right edge** of an event (a sound on the timeline) to repeat it. Drag in an
+  **empty lane** to paint the track's sound along it.
+* **Move / copy:** drag an event; hold **Ctrl** to copy. Hold **Shift** while dragging to ignore the grid.
+* **Volume of one event:** drag its **top line** down. **Fade in / out:** drag its **top-left /
+  top-right corner** (right-click → *Fades* for the curve shape).
+* **Reverse:** select events and press **U**. **Slip:** hold **Alt** and drag an event to slide the
+  audio inside it while it stays in place.
+* **Clicks at the edges?** Every event gets a tiny anti-click fade (1.5 ms) even with its fade handle
+  at zero. Change it in Edit → *Editing preferences* (0 ms = completely hard edges).
 * **Select several:** hold **Ctrl** and drag a box in an empty area.
 * **Play / stop:** Space. **Loop on/off:** L. **Zoom:** Ctrl + mouse wheel. **Fit everything:** F.
 * **Swap a sound:** right-click a track name → *Replace audio*, rest the mouse on a file to hear it.
-* **Pitch:** right-click a clip → *Pitch* (−12 … +12 semitones).
+* **Pitch:** right-click an event → *Pitch* (−12 … +12 semitones).
+* **Tag your loops:** File → *Embed Loop Metadata…* writes tempo, length and key into a WAV so MCP DAW
+  (and other loop software) knows its tempo. *Save Copy…* keeps the original file untouched.
 * **Effects:** select a track, then use the FX Rack buttons (EQ, compressor, reverb, delay, distortion).
 * **Undo anything:** Ctrl+Z (including everything an AI did).
 * **Save:** Ctrl+S (`.mcpdaw` project). **Export audio:** File → Render.
+* **Projects from 0.4.0** open fine. MCP DAW then offers to save an upgraded copy
+  (`<name>-v2.mcpdaw`) and leaves the original file alone, so it still opens in 0.4.0.
 
 ## 5. Connect an AI
 

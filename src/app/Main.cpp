@@ -78,6 +78,11 @@ public:
             if (error.isNotEmpty()) juce::Logger::writeToLog ("Audio device: " + error);
         }
 
+        // Editing preference: the Default declick time (minimum event fade), restored before the
+        // engine builds its first playback plan.
+        if (auto* settings = properties.getUserSettings())
+            controller.setDefaultDeclickMs (settings->getDoubleValue ("editing.declickMs", kDefaultDeclickMs));
+
         registerCoreActions (registry);
         registerEngineActions (registry);
         registerAppActions (registry, appHooks);

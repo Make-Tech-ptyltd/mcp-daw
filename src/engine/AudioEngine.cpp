@@ -52,6 +52,11 @@ void AudioEngine::projectChanged (const Project&, bool structural)
     if (structural) rebuildPlan();
 }
 
+void AudioEngine::editingPreferencesChanged()
+{
+    rebuildPlan();   // the Default declick time is compiled into the plan as sample counts
+}
+
 void AudioEngine::rebuildPlan()
 {
     const double sr = sampleRate.load();
@@ -59,7 +64,7 @@ void AudioEngine::rebuildPlan()
         registry = std::make_unique<RuntimeRegistry> (sr, PlanRenderer::kMaxBlock);   // old runtimes live on inside old plans
 
     auto holder = std::make_unique<PlanHolder>();
-    holder->plan = PlaybackPlan::build (controller.project(), *registry);
+    holder->plan = PlaybackPlan::build (controller.project(), *registry, controller.defaultDeclickMs());
     delete pendingPlan.exchange (holder.release(), std::memory_order_acq_rel);   // an unconsumed older plan was never seen
     collectGarbage();
 }

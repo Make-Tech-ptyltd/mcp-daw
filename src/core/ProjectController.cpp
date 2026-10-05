@@ -57,9 +57,10 @@ juce::var ProjectController::apply (const juce::String& label, const std::functi
     return result;
 }
 
-void ProjectController::replaceProject (Project p, juce::File f)
+void ProjectController::replaceProject (Project p, juce::File f, int loadedFormatVersion)
 {
     validateProject (p);
+    upgradedFrom = loadedFormatVersion < Project::kFormatVersion ? std::max (1, loadedFormatVersion) : 0;
     current = std::move (p);
     undoStack.clear();
     redoStack.clear();
@@ -70,6 +71,21 @@ void ProjectController::replaceProject (Project p, juce::File f)
     savedRevision = revision;   // a freshly opened or new project is clean
     ++loadCount;
     notify (true);
+}
+
+juce::File ProjectController::suggestedUpgradedFile() const
+{
+    if (file == juce::File()) return {};
+    auto suggested = file.getSiblingFile (file.getFileNameWithoutExtension() + "-v" + juce::String (Project::kFormatVersion) + ".mcpdaw");
+    return suggested.existsAsFile() ? suggested.getNonexistentSibling (true) : suggested;
+}
+
+void ProjectController::setDefaultDeclickMs (double ms)
+{
+    const double clamped = std::isfinite (ms) ? std::clamp (ms, 0.0, kMaxDeclickMs) : kDefaultDeclickMs;
+    if (clamped == declickMs) return;
+    declickMs = clamped;
+    listeners.call ([] (Listener& l) { l.editingPreferencesChanged(); });
 }
 
 bool ProjectController::undo()

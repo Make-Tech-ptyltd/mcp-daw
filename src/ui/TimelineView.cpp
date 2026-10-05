@@ -36,6 +36,60 @@ const juce::MouseCursor& pencilCursor()
     return cursor;
 }
 
+/** Fade cursor: a ramp, shown over an event's fade handles. */
+const juce::MouseCursor& fadeCursor()
+{
+    static const juce::MouseCursor cursor = []
+    {
+        const int size = 24;
+        juce::Image img (juce::Image::ARGB, size, size, true);
+        juce::Graphics g (img);
+        juce::Path ramp;                                  // rising fade shape with a baseline
+        ramp.startNewSubPath (3.0f, 19.0f);
+        ramp.quadraticTo (9.0f, 18.0f, 13.0f, 6.0f);
+        ramp.lineTo (21.0f, 6.0f);
+        juce::Path base;
+        base.startNewSubPath (3.0f, 19.0f);
+        base.lineTo (21.0f, 19.0f);
+        g.setColour (juce::Colours::black);
+        g.strokePath (ramp, juce::PathStrokeType (4.0f));
+        g.strokePath (base, juce::PathStrokeType (3.0f));
+        g.setColour (juce::Colours::white);
+        g.strokePath (ramp, juce::PathStrokeType (2.0f));
+        g.setColour (juce::Colour (0xff3fd0c9));
+        g.strokePath (base, juce::PathStrokeType (1.2f));
+        return juce::MouseCursor (img, 12, 12);
+    }();
+    return cursor;
+}
+
+/** Slip cursor: a waveform between left/right arrows (Alt over an event body). */
+const juce::MouseCursor& slipCursor()
+{
+    static const juce::MouseCursor cursor = []
+    {
+        const int size = 24;
+        juce::Image img (juce::Image::ARGB, size, size, true);
+        juce::Graphics g (img);
+        juce::Path arrows;
+        arrows.addArrow ({ 12.0f, 12.0f, 1.0f, 12.0f }, 1.5f, 7.0f, 4.0f);
+        arrows.addArrow ({ 12.0f, 12.0f, 23.0f, 12.0f }, 1.5f, 7.0f, 4.0f);
+        juce::Path wave;
+        wave.startNewSubPath (6.0f, 12.0f);
+        for (int i = 0; i <= 12; ++i)
+            wave.lineTo (6.0f + i, 12.0f + 5.0f * std::sin (i * 0.9f) * (i % 2 ? 1.0f : 0.4f));
+        g.setColour (juce::Colours::black);
+        g.strokePath (arrows, juce::PathStrokeType (2.5f));
+        g.strokePath (wave, juce::PathStrokeType (3.0f));
+        g.setColour (juce::Colours::white);
+        g.fillPath (arrows);
+        g.setColour (juce::Colour (0xff3fd0c9));
+        g.strokePath (wave, juce::PathStrokeType (1.4f));
+        return juce::MouseCursor (img, 12, 12);
+    }();
+    return cursor;
+}
+
 /** "Replace audio" menu entry that auditions its file after the pointer rests on it for 250 ms. */
 class AudioChoiceItem final : public juce::PopupMenu::CustomComponent, private juce::Timer
 {
@@ -92,6 +146,16 @@ double proportionForGainDb (double db) { return db <= kMinDb ? 0.0 : std::clamp 
 juce::String dbText (double db) { return db <= kMinDb ? juce::String ("-inf") : (db > 0 ? "+" : "") + juce::String (db, 1); }
 
 juce::var beatsVar (Tick t) { return ticksToBeats (t); }
+
+constexpr float kHandleSize = 7.0f;        // fade handle square
+constexpr float kMinEditWidth = 28.0f;     // narrower events are all body (move only; zoom in to edit)
+
+/** Fade length as text: "0.50 beats (250 ms)", or the declick note when there is no musical fade. */
+juce::String fadeText (Tick ticks, double bpm, double declickMs)
+{
+    if (ticks <= 0) return "none (declick " + juce::String (declickMs, 1) + " ms)";
+    return juce::String (ticksToBeats (ticks), 2) + " beats (" + juce::String (ticksToSeconds (ticks, bpm) * 1000.0, 0) + " ms)";
+}
 } // namespace
 
 TimelineView::TimelineView (AppContext& a) : app (a)
@@ -143,6 +207,42 @@ juce::Rectangle<float> TimelineView::eventRect (const Event& e, int row) const n
     return { x1, static_cast<float> (rowTop (row) + 3), std::max (2.0f, x2 - x1), static_cast<float> (trackHeight - 6) };
 }
 
+juce::Rectangle<float> TimelineView::waveArea (juce::Rectangle<float> r) noexcept
+{
+    return r.withTrimmedTop (static_cast<float> (kTitleStrip)).reduced (0, 2);
+}
+
+float TimelineView::gainLineY (const Event& e, juce::Rectangle<float> wave) noexcept
+{
+    // Amplitude mapping: the top of the waveform area is unity (0 dB and above), half way down is
+    // -6 dB, the bottom is silence.
+    const auto lin = static_cast<float> (std::min (1.0, dbToGain (e.gainDb)));
+    return wave.getY() + (1.0f - lin) * wave.getHeight();
+}
+
+juce::Rectangle<float> TimelineView::fadeHandle (const Event& e, int row, bool fadeIn) const noexcept
+{
+    const auto r = eventRect (e, row);
+    const float y = gainLineY (e, waveArea (r));
+    const float x = fadeIn ? xForTick (e.start + e.fadeInTicks) : xForTick (e.end() - e.fadeOutTicks);
+    // The square sits inside the event, at the end of the fade, on the gain line.
+    const float left = fadeIn ? std::min (x, r.getRight() - kHandleSize) : std::max (r.getX(), x - kHandleSize);
+    return { left, y, kHandleSize, kHandleSize };
+}
+
+bool TimelineView::showsEditHandles (const Event& e, int row) const noexcept
+{
+    return eventRect (e, row).getWidth() >= kMinEditWidth;
+}
+
+float TimelineView::drawnEnvelope (const Event& e, double tick) noexcept
+{
+    const auto lin = static_cast<float> (std::min (1.0, dbToGain (e.gainDb)));
+    const auto since = static_cast<std::int64_t> (std::floor (tick - static_cast<double> (e.start)));
+    const auto until = static_cast<std::int64_t> (std::floor (static_cast<double> (e.end()) - tick));
+    return lin * fadeInGain (e.fadeInCurve, since, e.fadeInTicks) * fadeOutGain (e.fadeOutCurve, until, e.fadeOutTicks);
+}
+
 Tick TimelineView::gridStep() const
 {
     const auto g = gridTicks (app.snap);
@@ -188,8 +288,19 @@ TimelineView::HitResult TimelineView::hitTest (juce::Point<float> p) const
         const auto rect = eventRect (*it, r.row);
         if (! rect.contains (p)) continue;
         r.event = &*it;
-        // Narrow clips (one-shot hits at normal zoom) are all body, so they can be grabbed and moved;
-        // zoom in to trim them.
+        // Priority: fade corner, gain line, trim edge, body. Narrow clips (one-shot hits at normal zoom)
+        // are all body so they can be grabbed and moved; zoom in to edit them.
+        if (rect.getWidth() >= kMinEditWidth)
+        {
+            if (fadeHandle (*it, r.row, true).expanded (5.0f, 5.0f).contains (p)) { r.kind = Hit::EventFadeIn; return r; }
+            if (fadeHandle (*it, r.row, false).expanded (5.0f, 5.0f).contains (p)) { r.kind = Hit::EventFadeOut; return r; }
+            const float gy = gainLineY (*it, waveArea (rect));
+            if (std::abs (p.y - gy) <= 4.0f && p.x > rect.getX() + kEdgeGrab && p.x < rect.getRight() - kEdgeGrab)
+            {
+                r.kind = Hit::EventGain;
+                return r;
+            }
+        }
         const float grab = rect.getWidth() < 20.0f ? 0.0f : std::min (kEdgeGrab, rect.getWidth() / 4.0f);
         if (grab <= 0.0f) r.kind = Hit::EventBody;
         else if (p.x >= rect.getRight() - grab) r.kind = Hit::EventEnd;
@@ -591,14 +702,16 @@ void TimelineView::paintLanes (juce::Graphics& g)
 
     // Events
     const bool movePreview = drag.kind == DragKind::Move && drag.moved;
-    const bool trimPreview = (drag.kind == DragKind::TrimStart || drag.kind == DragKind::TrimEnd) && drag.moved;
+    // In-place edits (trim, slip, gain, fades) replace the event with its preview while dragging.
+    const bool editPreview = drag.moved && (drag.kind == DragKind::TrimStart || drag.kind == DragKind::TrimEnd || drag.kind == DragKind::Slip
+                                            || drag.kind == DragKind::EventGain || drag.kind == DragKind::FadeIn || drag.kind == DragKind::FadeOut);
     for (int i = 0; i < static_cast<int> (p.tracks.size()); ++i)
     {
         const int top = rowTop (i);
         if (top + trackHeight < clip.getY() || top > clip.getBottom()) continue;
         for (const auto& e : p.tracks[static_cast<size_t> (i)].events)
         {
-            const bool dragged = (movePreview && ! drag.copy) || trimPreview
+            const bool dragged = (movePreview && ! drag.copy) || editPreview
                                      ? std::any_of (drag.originals.begin(), drag.originals.end(), [&] (const Ghost& o) { return o.event.id == e.id; })
                                      : false;
             if (dragged) continue;
@@ -607,8 +720,9 @@ void TimelineView::paintLanes (juce::Graphics& g)
             paintEvent (g, e, i, app.selectedEvents.contains (e.id), false);
         }
     }
-    if (movePreview || trimPreview)
-        for (const auto& ghost : drag.previews) paintEvent (g, ghost.event, ghost.row, true, true);
+    if (movePreview || editPreview)
+        for (const auto& ghost : drag.previews) paintEvent (g, ghost.event, ghost.row, true, movePreview);
+    if (editPreview) paintDragReadout (g);
 
     // Paint (draw-loop) preview
     if (drag.kind == DragKind::Paint && drag.moved && drag.b > drag.a)
@@ -668,10 +782,11 @@ void TimelineView::paintEvent (juce::Graphics& g, const Event& e, int row, bool 
     g.fillRoundedRectangle (title, 3.0f);
     g.fillRect (title.withTrimmedTop (4.0f));
 
-    // Waveform
-    auto body = r.withTrimmedTop (static_cast<float> (kTitleStrip)).reduced (0, 2);
+    // Waveform (drawn reversed for reversed events, scaled by event gain and musical fades)
+    auto body = waveArea (r);
     if (asset != nullptr && asset->data != nullptr && body.getHeight() > 6)
         paintWaveform (g, e, *asset, body, base.brighter (0.9f).withAlpha (0.9f * alpha));
+    if (body.getHeight() > 6 && ! ghost) paintEdgeOverlays (g, e, row, body, e.id.isNotEmpty() && (selected || e.id == hoverEventId));
 
     // Loop cycle notches: where the source wraps inside the event.
     if (e.looping && asset != nullptr)
@@ -680,8 +795,13 @@ void TimelineView::paintEvent (juce::Graphics& g, const Event& e, int row, bool 
         if (cycle > 0 && cycle * pixelsPerBeat / kTicksPerBeat > 6)
         {
             const Tick phase = beatsToTicks (secondsToBeats (e.sourceOffsetSeconds / e.rate(), p.bpm)) % cycle;
-            for (Tick t = e.start + (cycle - phase); t < e.end(); t += cycle)
+            // Forwards the source wraps (cycle - phase) after the start; reversed it wraps (cycle - phase)
+            // before the end, walking backwards.
+            const Tick first = e.reversed ? e.end() - (cycle - phase) - ((e.length - (cycle - phase)) / cycle) * cycle
+                                          : e.start + (cycle - phase);
+            for (Tick t = first; t < e.end(); t += cycle)
             {
+                if (t <= e.start) continue;
                 const float x = xForTick (t);
                 juce::Path notch;
                 notch.addTriangle (x - 4, r.getY() + kTitleStrip, x + 4, r.getY() + kTitleStrip, x, r.getY() + kTitleStrip + 5);
@@ -700,8 +820,10 @@ void TimelineView::paintEvent (juce::Graphics& g, const Event& e, int row, bool 
         g.setFont (fonts::ui (11.5f, true));
         const auto name = asset != nullptr ? asset->displayName() : juce::String ("?");
         juce::String label = name;
+        if (e.reversed) label = juce::String (juce::CharPointer_UTF8 ("\xe2\x97\x80 ")) + label + "  (reversed)";   // "◀ name"
         if (e.pitchSemitones != 0.0)   // e.g. "bass_A1  +7 st"
             label << "  " << (e.pitchSemitones > 0 ? "+" : "") << juce::String (e.pitchSemitones, 0) << " st";
+        if (e.gainDb != 0.0) label << "  " << dbText (e.gainDb) << " dB";
         if (! e.looping) label << "  (one-shot)";
         g.drawText (label, title.reduced (5, 0), juce::Justification::centredLeft, true);
     }
@@ -722,26 +844,158 @@ void TimelineView::paintWaveform (juce::Graphics& g, const Event& e, const Asset
     const int x0 = std::max ({ static_cast<int> (body.getX()), kHeaderWidth, clip.getX() });
     const int x1 = std::min ({ static_cast<int> (std::ceil (body.getRight())), laneRight(), clip.getRight() });
     const float cy = body.getCentreY(), half = body.getHeight() * 0.48f;
-    const double startX = body.getX();
+    const double startX = xForTick (e.start);
+    const double offsetFrames = e.sourceOffsetSeconds * sr;
+    const double eventFrames = ticksToSeconds (e.length, bpm) * sr * e.rate();   // source frames the window spans
+    const double ticksPerPixel = kTicksPerBeat / pixelsPerBeat;
 
     g.setColour (colour);
     for (int x = x0; x < x1; ++x)
     {
-        double f = e.sourceOffsetSeconds * sr + (x - startX) * framesPerPixel;
-        if (e.looping) f = std::fmod (f, frames);
-        else if (f >= frames) break;
-        if (f < 0) continue;
+        // Same mapping as the renderer: forwards the pixel shows offset + t; reversed the window is
+        // read back to front, so the pixel shows offset + (window - t) and the drawing is mirrored.
+        const double along = (x - startX) * framesPerPixel;
+        double f = e.reversed ? offsetFrames + eventFrames - along - framesPerPixel : offsetFrames + along;
+        if (e.looping)
+        {
+            f = std::fmod (f, frames);
+            if (f < 0) f += frames;
+        }
+        else if (f >= frames)
+        {
+            if (e.reversed) continue;   // reversed one-shot: silence until the window reaches the source
+            break;
+        }
+        if (f < 0) { if (e.reversed) break; continue; }
         const auto mm = data.peaks.query (f, std::min (frames, f + std::max (1.0, framesPerPixel)));
-        const float top = cy - juce::jlimit (0.0f, 1.0f, mm.hi) * half;
-        const float bottom = cy - juce::jlimit (-1.0f, 0.0f, mm.lo) * half;
+        // Event gain and musical fades scale the drawing exactly as they scale the sound.
+        const float env = drawnEnvelope (e, static_cast<double> (e.start) + (x + 0.5 - startX) * ticksPerPixel);
+        const float top = cy - juce::jlimit (0.0f, 1.0f, mm.hi * env) * half;
+        const float bottom = cy - juce::jlimit (-1.0f, 0.0f, mm.lo * env) * half;
         g.fillRect (static_cast<float> (x), top, 1.0f, std::max (1.0f, bottom - top));
     }
+}
+
+void TimelineView::paintEdgeOverlays (juce::Graphics& g, const Event& e, int row, juce::Rectangle<float> wave, bool handles)
+{
+    if (! showsEditHandles (e, row)) return;
+    const float gy = gainLineY (e, wave);
+    const float bottom = wave.getBottom();
+    const auto line = colours::text;
+
+    // Gain line: faint at 0 dB, clearer when the gain is down or the event is hovered/selected.
+    if (handles || e.gainDb != 0.0)
+    {
+        g.setColour (line.withAlpha (handles ? 0.65f : 0.35f));
+        g.drawHorizontalLine (juce::roundToInt (gy), xForTick (e.start + e.fadeInTicks), xForTick (e.end() - e.fadeOutTicks));
+    }
+
+    // Musical fades: shade what the fade removes and draw its curve from the silent corner to the gain line.
+    auto fadePath = [&] (bool fadeIn)
+    {
+        const Tick len = fadeIn ? e.fadeInTicks : e.fadeOutTicks;
+        if (len <= 0) return;
+        const float xa = xForTick (fadeIn ? e.start : e.end() - len), xb = xForTick (fadeIn ? e.start + len : e.end());
+        const int steps = juce::jlimit (2, 64, static_cast<int> ((xb - xa) / 3.0f));
+        juce::Path curve, shade;
+        for (int i = 0; i <= steps; ++i)
+        {
+            const float frac = static_cast<float> (i) / static_cast<float> (steps);
+            const float x = xa + frac * (xb - xa);
+            const float gfade = fadeIn ? fadeShape (e.fadeInCurve, frac) : 1.0f - fadeShape (e.fadeOutCurve, frac);
+            const float y = bottom - gfade * (bottom - gy);
+            if (i == 0) { curve.startNewSubPath (x, y); shade.startNewSubPath (x, y); }
+            else { curve.lineTo (x, y); shade.lineTo (x, y); }
+        }
+        shade.lineTo (xb, wave.getY());   // close along the top: the shaded area is what the fade removes
+        shade.lineTo (xa, wave.getY());
+        shade.closeSubPath();
+        g.setColour (colours::window.withAlpha (0.35f));
+        g.fillPath (shade);
+        g.setColour (line.withAlpha (0.85f));
+        g.strokePath (curve, juce::PathStrokeType (1.4f));
+    };
+    {
+        juce::Graphics::ScopedSaveState save (g);
+        g.reduceClipRegion (wave.getSmallestIntegerContainer());
+        fadePath (true);
+        fadePath (false);
+    }
+
+    if (! handles) return;
+    for (bool in : { true, false })
+    {
+        const auto h = fadeHandle (e, row, in);
+        g.setColour (colours::window.withAlpha (0.9f));
+        g.fillRect (h.expanded (1.0f));
+        g.setColour ((in ? e.fadeInTicks : e.fadeOutTicks) > 0 ? colours::accent : line.withAlpha (0.9f));
+        g.fillRect (h);
+    }
+}
+
+void TimelineView::paintDragReadout (juce::Graphics& g)
+{
+    if (drag.previews.empty()) return;
+    const auto& p = app.project();
+    const auto primary = std::find_if (drag.previews.begin(), drag.previews.end(), [&] (const Ghost& gh) { return gh.event.id == drag.eventId; });
+    const auto& gh = primary != drag.previews.end() ? *primary : drag.previews.front();
+    const auto r = eventRect (gh.event, gh.row);
+    juce::String text;
+    switch (drag.kind)
+    {
+        case DragKind::EventGain:
+            text = "Event gain " + dbText (gh.event.gainDb) + " dB" + (drag.previews.size() > 1 ? "  (" + juce::String (drag.previews.size()) + " events)" : juce::String());
+            break;
+        case DragKind::FadeIn:  text = "Fade in " + fadeText (gh.event.fadeInTicks, p.bpm, app.controller.defaultDeclickMs()); break;
+        case DragKind::FadeOut: text = "Fade out " + fadeText (gh.event.fadeOutTicks, p.bpm, app.controller.defaultDeclickMs()); break;
+        case DragKind::Slip:
+        {
+            const double moved = ticksToBeats (drag.delta);
+            text = "Slip " + juce::String (moved > 0 ? "+" : "") + juce::String (moved, 3) + " beats  (source offset "
+                 + juce::String (gh.event.sourceOffsetSeconds, 3) + " s)" + (drag.slipClamped ? "  - start/end of the sample" : "");
+            break;
+        }
+        case DragKind::TrimStart:
+        case DragKind::TrimEnd:
+            text = "Length " + juce::String (ticksToBeats (gh.event.length), 3) + " beats";
+            break;
+        default: return;
+    }
+    g.setFont (fonts::ui (12.0f, true));
+    const float w = juce::GlyphArrangement::getStringWidth (g.getCurrentFont(), text) + 14.0f;
+    auto box = juce::Rectangle<float> (r.getX() + 4.0f, r.getY() - 22.0f, w, 18.0f);
+    if (box.getY() < kRulerHeight) box.setY (r.getBottom() + 4.0f);
+    g.setColour (colours::window.withAlpha (0.92f));
+    g.fillRoundedRectangle (box, 3.0f);
+    g.setColour (colours::accent);
+    g.drawRoundedRectangle (box, 3.0f, 1.0f);
+    g.setColour (colours::text);
+    g.drawText (text, box.reduced (7.0f, 0.0f), juce::Justification::centredLeft, false);
 }
 
 // ================================================================================================
 // Mouse
 // ================================================================================================
-void TimelineView::mouseMove (const juce::MouseEvent& e) { updateCursor (e.position, e.mods); }
+void TimelineView::mouseMove (const juce::MouseEvent& e)
+{
+    updateCursor (e.position, e.mods);
+    // Track the hovered event so its fade/gain handles appear (kept out of the way otherwise).
+    const auto hit = hitTest (e.position);
+    const auto id = hit.event != nullptr ? hit.event->id : juce::String();
+    if (id != hoverEventId)
+    {
+        auto repaintEvent = [this] (const juce::String& eventId)
+        {
+            const auto& p = app.project();
+            for (int row = 0; row < static_cast<int> (p.tracks.size()); ++row)
+                for (const auto& ev : p.tracks[static_cast<size_t> (row)].events)
+                    if (ev.id == eventId) repaint (eventRect (ev, row).expanded (2.0f).getSmallestIntegerContainer());
+        };
+        repaintEvent (hoverEventId);
+        hoverEventId = id;
+        repaintEvent (hoverEventId);
+    }
+}
 
 void TimelineView::modifierKeysChanged (const juce::ModifierKeys& mods)
 {
@@ -758,7 +1012,14 @@ void TimelineView::updateCursor (juce::Point<float> position, juce::ModifierKeys
     {
         case Hit::EventStart:
         case Hit::EventEnd:   setMouseCursor (juce::MouseCursor::LeftRightResizeCursor); break;
-        case Hit::EventBody:  setMouseCursor (juce::MouseCursor::DraggingHandCursor); break;
+        case Hit::EventFadeIn:
+        case Hit::EventFadeOut: setMouseCursor (fadeCursor()); break;
+        case Hit::EventGain:  setMouseCursor (juce::MouseCursor::UpDownResizeCursor); break;
+        case Hit::EventBody:
+            if (e.mods.isAltDown()) setMouseCursor (slipCursor());                         // Alt+drag = slip
+            else if (e.mods.isCtrlDown()) setMouseCursor (juce::MouseCursor::CopyingCursor); // Ctrl+drag = copy
+            else setMouseCursor (juce::MouseCursor::DraggingHandCursor);
+            break;
         case Hit::EmptyLane:
             if (e.mods.isCtrlDown()) { setMouseCursor (juce::MouseCursor::CrosshairCursor); break; }
             // Pencil = paint the track's sample here; crosshair (Ctrl) = rubber-band select.
@@ -785,7 +1046,11 @@ void TimelineView::updateCursor (juce::Point<float> position, juce::ModifierKeys
     }
 }
 
-void TimelineView::mouseExit (const juce::MouseEvent&) { setMouseCursor (juce::MouseCursor::NormalCursor); }
+void TimelineView::mouseExit (const juce::MouseEvent&)
+{
+    setMouseCursor (juce::MouseCursor::NormalCursor);
+    if (hoverEventId.isNotEmpty()) { hoverEventId.clear(); repaint(); }
+}
 
 void TimelineView::mouseDown (const juce::MouseEvent& e)
 {
@@ -803,7 +1068,7 @@ void TimelineView::mouseDown (const juce::MouseEvent& e)
         setMouseCursor (juce::MouseCursor::DraggingHandCursor);
         return;
     }
-    drag.noSnap = e.mods.isAltDown();
+    drag.noSnap = e.mods.isShiftDown();   // Shift bypasses snapping (Alt is slip)
     const auto hit = hitTest (e.position);
     drag.downRow = hit.row;
     const auto& p = app.project();
@@ -860,6 +1125,9 @@ void TimelineView::mouseDown (const juce::MouseEvent& e)
         case Hit::EventBody:
         case Hit::EventStart:
         case Hit::EventEnd:
+        case Hit::EventFadeIn:
+        case Hit::EventFadeOut:
+        case Hit::EventGain:
         {
             const auto& ev = *hit.event;
             const auto& track = p.tracks[static_cast<size_t> (hit.row)];
@@ -882,16 +1150,27 @@ void TimelineView::mouseDown (const juce::MouseEvent& e)
             if (e.mods.isPopupMenu()) { showEventMenu (ev, hit.row); return; }
 
             drag.eventId = ev.id;
-            drag.kind = hit.kind == Hit::EventStart ? DragKind::TrimStart : hit.kind == Hit::EventEnd ? DragKind::TrimEnd : DragKind::Move;
-            drag.copy = e.mods.isCtrlDown() && drag.kind == DragKind::Move;
-            if (drag.kind == DragKind::Move)
+            switch (hit.kind)
             {
+                case Hit::EventStart:   drag.kind = DragKind::TrimStart; break;
+                case Hit::EventEnd:     drag.kind = DragKind::TrimEnd; break;
+                case Hit::EventFadeIn:  drag.kind = DragKind::FadeIn; break;
+                case Hit::EventFadeOut: drag.kind = DragKind::FadeOut; break;
+                case Hit::EventGain:    drag.kind = DragKind::EventGain; break;
+                default:                drag.kind = e.mods.isAltDown() ? DragKind::Slip : DragKind::Move; break;
+            }
+            drag.copy = e.mods.isCtrlDown() && drag.kind == DragKind::Move;
+            const bool wholeSelection = drag.kind == DragKind::Move || (drag.kind == DragKind::EventGain && app.selectedEvents.contains (ev.id));
+            if (wholeSelection)
+            {
+                // Move drags the selection; the gain line adjusts every selected event (relative, in dB).
                 for (int r = 0; r < static_cast<int> (p.tracks.size()); ++r)
                     for (const auto& x : p.tracks[static_cast<size_t> (r)].events)
                         if (app.selectedEvents.contains (x.id)) drag.originals.push_back ({ x, r });
             }
             else drag.originals.push_back ({ ev, hit.row });
             drag.previews = drag.originals;
+            if (drag.kind == DragKind::Slip) setMouseCursor (slipCursor());
             break;
         }
 
@@ -972,10 +1251,10 @@ void TimelineView::mouseDrag (const juce::MouseEvent& e)
     }
     if (! drag.moved && e.getDistanceFromDragStart() < 3) return;
     drag.moved = true;
-    drag.noSnap = e.mods.isAltDown();
+    drag.noSnap = e.mods.isShiftDown();   // Shift during any drag temporarily bypasses snapping
 
     // Edge auto-scroll while dragging horizontally.
-    if (drag.kind != DragKind::HeaderGain)
+    if (drag.kind != DragKind::HeaderGain && drag.kind != DragKind::EventGain)
     {
         if (e.position.x > laneRight() - 16) { scrollBeat += 8.0 / pixelsPerBeat; updateScrollbars(); }
         else if (e.position.x < kHeaderWidth + 8 && scrollBeat > 0) { scrollBeat = std::max (0.0, scrollBeat - 8.0 / pixelsPerBeat); updateScrollbars(); }
@@ -1007,7 +1286,14 @@ void TimelineView::mouseDrag (const juce::MouseEvent& e)
             auto& g = drag.previews.front();
             const auto& o = drag.originals.front().event;
             const Tick minLen = drag.noSnap ? 1 : std::max<Tick> (1, gridTicks (app.snap));
-            g.event.length = std::max (minLen, snapped (o.end() + rawDelta, drag.noSnap) - o.start);
+            Tick newEnd = o.start + std::max (minLen, snapped (o.end() + rawDelta, drag.noSnap) - o.start);
+            // A reversed one-shot's right edge carries its source offset: it can't reach before the source start.
+            if (o.reversed && ! o.looping)
+                newEnd = std::min (newEnd, o.end() + beatsToTicks (secondsToBeats (o.sourceOffsetSeconds / o.rate(), p.bpm)));
+            g.event = o;
+            g.event.sourceOffsetSeconds = std::max (0.0, offsetForRange (p, o, o.start, newEnd));
+            g.event.length = newEnd - o.start;
+            g.event.clampFades();
             break;
         }
         case DragKind::TrimStart:
@@ -1015,17 +1301,52 @@ void TimelineView::mouseDrag (const juce::MouseEvent& e)
             auto& g = drag.previews.front();
             const auto& o = drag.originals.front().event;
             Tick newStart = std::clamp<Tick> (snapped (o.start + rawDelta, drag.noSnap), 0, o.end() - 1);
-            if (! o.looping)
+            if (! o.looping && ! o.reversed)
                 newStart = std::max (newStart, o.start - beatsToTicks (secondsToBeats (o.sourceOffsetSeconds / o.rate(), p.bpm)));
+            g.event = o;
+            g.event.sourceOffsetSeconds = std::max (0.0, offsetForRange (p, o, newStart, o.end()));   // audio stays in place
             g.event.start = newStart;
             g.event.length = o.end() - newStart;
-            double offset = o.sourceOffsetSeconds + ticksToSeconds (newStart - o.start, p.bpm) * o.rate();
-            if (const auto* a = p.findAsset (o.assetId); a != nullptr && o.looping && a->durationSeconds() > 0)
+            g.event.clampFades();
+            break;
+        }
+        case DragKind::Slip:
+        {
+            // The event stays put; the audio follows the mouse (snapped to the grid unless Shift).
+            auto& g = drag.previews.front();
+            const auto& o = drag.originals.front().event;
+            drag.delta = drag.noSnap ? rawDelta : snapTicks (rawDelta, gridTicks (app.snap));
+            g.event = o;
+            g.event.sourceOffsetSeconds = slippedOffset (p, o, ticksToBeats (drag.delta), &drag.slipClamped);
+            break;
+        }
+        case DragKind::EventGain:
+        {
+            // Amplitude mapping (see gainLineY): dragging down by the full waveform height = silence.
+            const auto primary = std::find_if (drag.originals.begin(), drag.originals.end(), [&] (const Ghost& gh) { return gh.event.id == drag.eventId; });
+            if (primary == drag.originals.end()) break;
+            const auto wave = waveArea (eventRect (primary->event, primary->row));
+            const double startLin = std::min (1.0, dbToGain (primary->event.gainDb));
+            const double lin = std::clamp (startLin + (drag.down.y - e.position.y) / std::max (1.0f, wave.getHeight()), 0.0, 1.0);
+            const bool unchangedAboveUnity = primary->event.gainDb > 0.0 && lin >= 1.0;   // don't snap +dB back to 0 at the top
+            double db = unchangedAboveUnity ? primary->event.gainDb : (lin <= 0.0 ? kMinDb : std::round (gainToDb (lin) * 10.0) / 10.0);
+            if (! e.mods.isShiftDown() && std::abs (db) < 0.3) db = 0.0;   // detent at unity
+            const double change = db - primary->event.gainDb;
+            for (size_t i = 0; i < drag.originals.size(); ++i)
             {
-                offset = std::fmod (offset, a->durationSeconds());
-                if (offset < 0) offset += a->durationSeconds();
+                const auto& o = drag.originals[i].event;
+                drag.previews[i].event.gainDb = db <= kMinDb ? kMinDb : std::clamp (o.gainDb + change, kMinDb, kMaxDb);
             }
-            g.event.sourceOffsetSeconds = std::max (0.0, offset);
+            break;
+        }
+        case DragKind::FadeIn:
+        case DragKind::FadeOut:
+        {
+            auto& g = drag.previews.front();
+            const auto& o = drag.originals.front().event;
+            const Tick at = std::clamp<Tick> (snapped (mouseTick, drag.noSnap), o.start, o.end());
+            if (drag.kind == DragKind::FadeIn) g.event.fadeInTicks = at - o.start;
+            else g.event.fadeOutTicks = o.end() - at;
             break;
         }
         case DragKind::Paint:
@@ -1132,6 +1453,42 @@ void TimelineView::commitDrag()
                 app.run ("resize_event", makeObject ({ { "eventId", drag.eventId }, { "startBeat", beatsVar (drag.previews.front().event.start) } }));
             else clickSeek();
             break;
+        case DragKind::Slip:
+            if (drag.moved && drag.delta != 0)
+                app.run ("slip_event", makeObject ({ { "eventId", drag.eventId },
+                                                     { "sourceOffsetSeconds", drag.previews.front().event.sourceOffsetSeconds } }));
+            else if (! drag.moved) clickSeek();
+            break;
+        case DragKind::EventGain:
+        {
+            if (! drag.moved) break;
+            // One undo step ("Adjust event gain") whether one or many events changed.
+            std::map<double, juce::Array<juce::var>> byValue;   // events sharing a value go in one call
+            for (size_t i = 0; i < drag.previews.size(); ++i)
+                if (drag.previews[i].event.gainDb != drag.originals[i].event.gainDb)
+                    byValue[drag.previews[i].event.gainDb].add (drag.previews[i].event.id);
+            if (byValue.size() == 1)
+                app.run ("set_event_gain", makeObject ({ { "eventIds", byValue.begin()->second }, { "db", byValue.begin()->first } }));
+            else if (byValue.size() > 1)
+            {
+                juce::Array<juce::var> steps;
+                for (const auto& [db, ids] : byValue)
+                    steps.add (makeObject ({ { "action", "set_event_gain" }, { "arguments", makeObject ({ { "eventIds", ids }, { "db", db } }) } }));
+                app.run ("execute_batch", makeObject ({ { "actions", steps }, { "label", "Adjust event gain" } }));
+            }
+            break;
+        }
+        case DragKind::FadeIn:
+        case DragKind::FadeOut:
+        {
+            if (! drag.moved) break;
+            const auto& g = drag.previews.front().event;
+            const bool in = drag.kind == DragKind::FadeIn;
+            if ((in ? g.fadeInTicks : g.fadeOutTicks) == (in ? drag.originals.front().event.fadeInTicks : drag.originals.front().event.fadeOutTicks)) break;
+            app.run ("set_event_fades", makeObject ({ { "eventIds", juce::Array<juce::var> { g.id } },
+                                                      { in ? "fadeInBeats" : "fadeOutBeats", beatsVar (in ? g.fadeInTicks : g.fadeOutTicks) } }));
+            break;
+        }
         case DragKind::Paint:
             if (! drag.moved) { clickSeek(); break; }
             if (drag.b > drag.a)
@@ -1172,6 +1529,14 @@ void TimelineView::mouseDoubleClick (const juce::MouseEvent& e)
     const auto& p = app.project();
     switch (hit.kind)
     {
+        case Hit::EventGain:      // double-click the gain line: back to 0 dB
+            app.run ("set_event_gain", makeObject ({ { "eventId", hit.event->id }, { "db", 0.0 } }));
+            break;
+        case Hit::EventFadeIn:    // double-click a fade handle: remove that fade (the declick remains)
+        case Hit::EventFadeOut:
+            app.run ("set_event_fades", makeObject ({ { "eventIds", juce::Array<juce::var> { hit.event->id } },
+                                                      { hit.kind == Hit::EventFadeIn ? "fadeInBeats" : "fadeOutBeats", 0 } }));
+            break;
         case Hit::EventBody:
         case Hit::EventStart:
         case Hit::EventEnd:
@@ -1238,7 +1603,21 @@ void TimelineView::showEventMenu (const Event& ev, int)
     m.addItem (4, "Delete  (Del)");
     m.addSeparator();
     m.addItem (5, "Loop (repeat source)", true, ev.looping);
+    m.addItem (7, "Reverse  (U)", true, ev.reversed);
     m.addItem (6, "Set loop region to event");
+
+    // Event fades: curve per edge (drag the top corners for the lengths). Like Pitch, these apply to the
+    // whole selection when the clicked event is part of it.
+    constexpr int kFadeInCurveBase = 200, kFadeOutCurveBase = 210;
+    juce::PopupMenu fadeMenu;
+    const char* curveLabels[] = { "Linear", "Smooth", "Fast", "Slow" };
+    fadeMenu.addSectionHeader ("Fade-in curve");
+    for (int c = 0; c < 4; ++c) fadeMenu.addItem (kFadeInCurveBase + c, curveLabels[c], true, static_cast<int> (ev.fadeInCurve) == c);
+    fadeMenu.addSectionHeader ("Fade-out curve");
+    for (int c = 0; c < 4; ++c) fadeMenu.addItem (kFadeOutCurveBase + c, curveLabels[c], true, static_cast<int> (ev.fadeOutCurve) == c);
+    fadeMenu.addSeparator();
+    fadeMenu.addItem (220, "Remove fades (keep the declick)", ev.fadeInTicks > 0 || ev.fadeOutTicks > 0);
+    m.addSubMenu ("Fades", fadeMenu);
 
     // Pitch: -12..+12 semitones (varispeed, like a sampler). Applies to the whole selection
     // when the clicked event is part of it, otherwise just to the clicked event.
@@ -1254,22 +1633,38 @@ void TimelineView::showEventMenu (const Event& ev, int)
                                                          + juce::String (ev.pitchSemitones, 0) + " st)" : juce::String()),
                   pitchMenu);
 
+    // Embed Loop Metadata: write ACID-compatible loop metadata into this event's source WAV.
+    juce::File sourceFile;
+    if (const auto* a = app.project().findAsset (ev.assetId)) sourceFile = juce::File (a->path);
+    m.addSeparator();
+    m.addItem (8, "Embed Loop Metadata in source WAV...", sourceFile.hasFileExtension ("wav") && sourceFile.existsAsFile() && onEmbedLoopMetadata != nullptr);
+
     const auto id = ev.id;
     m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withMousePosition(),
-                     [safe = juce::Component::SafePointer<TimelineView> (this), id] (int r)
+                     [safe = juce::Component::SafePointer<TimelineView> (this), id, sourceFile] (int r)
     {
         if (safe == nullptr || r == 0) return;
         auto& self = *safe;
         const auto ref = self.app.project().findEvent (id);
         if (ref.event == nullptr) return;
+        const auto targets = self.app.selectedEvents.contains (id) ? self.app.selectedEvents : juce::StringArray (id);
+        juce::Array<juce::var> ids;
+        for (const auto& t : targets) ids.add (t);
         if (r >= 100 && r <= 124)
         {
-            const auto targets = self.app.selectedEvents.contains (id) ? self.app.selectedEvents : juce::StringArray (id);
-            juce::Array<juce::var> ids;
-            for (const auto& t : targets) ids.add (t);
             self.app.run ("set_event_pitch", makeObject ({ { "eventIds", ids }, { "semitones", r - 112 } }));
             return;
         }
+        static const char* curveNames[] = { "linear", "smooth", "fast", "slow" };
+        if (r >= 200 && r < 204) { self.app.run ("set_event_fades", makeObject ({ { "eventIds", ids }, { "fadeInCurve", curveNames[r - 200] } })); return; }
+        if (r >= 210 && r < 214) { self.app.run ("set_event_fades", makeObject ({ { "eventIds", ids }, { "fadeOutCurve", curveNames[r - 210] } })); return; }
+        if (r == 220) { self.app.run ("set_event_fades", makeObject ({ { "eventIds", ids }, { "fadeInBeats", 0 }, { "fadeOutBeats", 0 } })); return; }
+        if (r == 7)
+        {
+            self.app.run ("set_event_reverse", makeObject ({ { "eventIds", ids }, { "enabled", ! ref.event->reversed } }));
+            return;
+        }
+        if (r == 8) { if (self.onEmbedLoopMetadata) self.onEmbedLoopMetadata (sourceFile); return; }
         switch (r)
         {
             case 1: self.splitAtCursor(); break;
@@ -1522,7 +1917,13 @@ void TimelineView::paste()
                                                               { "lengthBeats", ticksToBeats (item.event.length) },
                                                               { "looping", item.event.looping },
                                                               { "sourceOffsetSeconds", item.event.sourceOffsetSeconds },
-                                                              { "pitchSemitones", item.event.pitchSemitones } }));
+                                                              { "pitchSemitones", item.event.pitchSemitones },
+                                                              { "gainDb", item.event.gainDb },
+                                                              { "reversed", item.event.reversed },
+                                                              { "fadeInBeats", ticksToBeats (item.event.fadeInTicks) },
+                                                              { "fadeOutBeats", ticksToBeats (item.event.fadeOutTicks) },
+                                                              { "fadeInCurve", fadeCurveName (item.event.fadeInCurve) },
+                                                              { "fadeOutCurve", fadeCurveName (item.event.fadeOutCurve) } }));
         if (r.isObject()) ids.add (r["id"].toString());
     }
     app.endGesture();
@@ -1561,6 +1962,24 @@ void TimelineView::loopToSelection()
         if (const auto ref = p.findEvent (id); ref.event != nullptr) { lo = std::min (lo, ref.event->start); hi = std::max (hi, ref.event->end()); }
     if (hi > lo)
         app.run ("set_loop_region", makeObject ({ { "startBeat", ticksToBeats (lo) }, { "endBeat", ticksToBeats (hi) }, { "enabled", true } }));
+}
+
+void TimelineView::toggleSelectionReverse()
+{
+    const auto& p = app.project();
+    juce::Array<juce::var> ids;
+    bool allReversed = true;
+    for (const auto& id : app.selectedEvents)
+        if (const auto ref = p.findEvent (id); ref.event != nullptr)
+        {
+            ids.add (id);
+            allReversed = allReversed && ref.event->reversed;
+        }
+    if (ids.isEmpty()) { app.status ("Select events to reverse (U)"); return; }
+    // The shortcut toggles; the action itself takes an explicit state (as MCP clients use it).
+    if (app.run ("set_event_reverse", makeObject ({ { "eventIds", ids }, { "enabled", ! allReversed } })).isObject())
+        app.status (juce::String (ids.size()) + (ids.size() == 1 ? " event " : " events ") + (allReversed ? "forwards" : "reversed")
+                    + " - the audio file is unchanged (Ctrl+Z to undo)");
 }
 
 void TimelineView::toggleSelectionLooping()

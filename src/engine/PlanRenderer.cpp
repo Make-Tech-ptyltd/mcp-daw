@@ -6,8 +6,6 @@ namespace mcpdaw
 {
 namespace
 {
-constexpr int kFadeSamples = 64;   // ~1.3 ms declick at 48 kHz
-
 inline float hermite (float xm1, float x0, float x1, float x2, float t) noexcept
 {
     const float c = 0.5f * (x1 - xm1);
@@ -78,12 +76,30 @@ void PlanRenderer::renderEvents (const PlanChannel& ch, std::int64_t segStart, i
         const float* srcL = pcm.getReadPointer (0);
         const float* srcR = pcm.getReadPointer (pcm.getNumChannels() > 1 ? 1 : 0);
 
+        // Position at the first sample of this segment, computed from the absolute timeline position
+        // (not accumulated from earlier blocks), so any block size renders the same audio.
+        const bool forwards = e.step > 0;
         double pos = e.sourceStart + static_cast<double> (from - e.start) * e.step;
-        if (e.looping) pos = std::fmod (pos, loopFrames);
+        if (e.looping)
+        {
+            pos = std::fmod (pos, loopFrames);
+            if (pos < 0) pos += loopFrames;
+            if (pos >= loopFrames) pos = 0;   // -tiny + frames can round up to exactly frames
+        }
+        const double lastFrame = frames - 1;
 
         for (std::int64_t t = from; t < to; ++t)
         {
-            if (! e.looping && pos >= frames - 1) break;   // one-shot finished
+            if (! e.looping)
+            {
+                if (forwards) { if (pos >= lastFrame) break; }   // one-shot finished
+                else if (pos < 0) break;                         // reversed one-shot reached the source start
+                else if (pos >= lastFrame)                       // reversed: silence until the window reaches the source
+                {
+                    pos += e.step;
+                    continue;
+                }
+            }
 
             // 4-point cubic Hermite: clean enough for pitched-up / pitched-down sampler playback,
             // far better than linear for low sines (bass) and cheap enough for many voices.
@@ -99,16 +115,23 @@ void PlanRenderer::renderEvents (const PlanChannel& ch, std::int64_t segStart, i
             const float l = hermite (srcL[im], srcL[i0], srcL[i1], srcL[i2], frac);
             const float r = hermite (srcR[im], srcR[i0], srcR[i1], srcR[i2], frac);
 
+            // Edge envelopes (event fade or declick, whichever is longer - resolved in the plan) multiply
+            // with the event gain; overlapping fade-in/fade-out simply multiply too.
             float g = e.gain;
-            if (e.fadeIn && t - e.start < kFadeSamples) g *= static_cast<float> (t - e.start) / kFadeSamples;
-            if (e.fadeOut && e.end - t <= kFadeSamples) g *= static_cast<float> (e.end - t - 1) / kFadeSamples;
+            const std::int64_t sinceStart = t - e.start, untilEnd = e.end - 1 - t;
+            if (sinceStart < e.fadeInSamples) g *= fadeInGain (e.fadeInCurve, sinceStart, e.fadeInSamples);
+            if (untilEnd < e.fadeOutSamples) g *= fadeOutGain (e.fadeOutCurve, untilEnd, e.fadeOutSamples);
 
             const auto o = static_cast<int> (t - segStart);
             outL[o] += l * g;
             outR[o] += r * g;
 
             pos += e.step;
-            if (e.looping && pos >= loopFrames) pos -= loopFrames;
+            if (e.looping)
+            {
+                if (pos >= loopFrames) pos -= loopFrames;
+                else if (pos < 0) { pos += loopFrames; if (pos >= loopFrames) pos = 0; }
+            }
         }
     }
 }

@@ -70,17 +70,28 @@ private:
     bool statusIsError = false;
     juce::uint32 statusTime = 0;
     std::unique_ptr<juce::FileChooser> chooser;
-    std::unique_ptr<juce::DocumentWindow> audioSettingsWindow, helpWindow;
+    std::unique_ptr<juce::DocumentWindow> audioSettingsWindow, helpWindow, preferencesWindow, loopMetadataWindow;
+    int seenLoadCount = -1;
+    bool upgradeNoticeOpen = false;
 
     void projectChanged (const Project&, bool) override;
+    void editingPreferencesChanged() override;
     void timerCallback() override;
     void updateTitle();
     void updateMcpStatus();
     void layoutStatusBar();
     juce::String fileStatusText() const;
-    void chooseFile (const juce::String& title, const juce::String& patterns, bool save, std::function<void (const juce::File&)> then);
+    void chooseFile (const juce::String& title, const juce::String& patterns, bool save, std::function<void (const juce::File&)> then,
+                     const juce::File& start = {});
     void saveAs (std::function<void()> after = {});
     void save (std::function<void()> after = {});
+    /** Save As for a project upgraded from an older format: suggests "<name>-v<N>.mcpdaw". Choosing the
+        original file (and confirming the overwrite in the file dialog) is allowed, never automatic. */
+    void saveUpgradedCopy (std::function<void()> after = {});
+    void showUpgradeNotice();
+    void showEditingPreferences();
+    void showLoopMetadata (const juce::File& wav);
+    void chooseLoopMetadataFile();
     void showAudioSettings();
     void showMcpHelp();
     void showAbout();

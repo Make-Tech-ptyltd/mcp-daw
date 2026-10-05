@@ -78,7 +78,7 @@ void panGains (double gainDb, double pan, float& l, float& r)
 }
 } // namespace
 
-std::unique_ptr<PlaybackPlan> PlaybackPlan::build (const Project& project, RuntimeRegistry& registry)
+std::unique_ptr<PlaybackPlan> PlaybackPlan::build (const Project& project, RuntimeRegistry& registry, double declickMs)
 {
     auto plan = std::make_unique<PlaybackPlan>();
     plan->sampleRate = registry.sampleRate();
@@ -92,6 +92,7 @@ std::unique_ptr<PlaybackPlan> PlaybackPlan::build (const Project& project, Runti
     for (const auto& a : project.assets) plan->audio.push_back (a.data);
 
     const bool solo = project.anySolo();
+    const std::int64_t declick = declickSamples (declickMs, plan->sampleRate);
     plan->tracks.reserve (project.tracks.size());
     for (const auto& track : project.tracks)
     {
@@ -115,24 +116,43 @@ std::unique_ptr<PlaybackPlan> PlaybackPlan::build (const Project& project, Runti
             pe.start = ticksToSamples (e.start, project.bpm, plan->sampleRate);
             pe.end = ticksToSamples (e.end(), project.bpm, plan->sampleRate);
             if (pe.end <= pe.start) continue;
-            pe.step = data.sampleRate / plan->sampleRate * e.rate();   // rate conversion x pitch (varispeed)
+            const double step = data.sampleRate / plan->sampleRate * e.rate();   // rate conversion x pitch (varispeed)
             pe.looping = e.looping;
             pe.gain = static_cast<float> (dbToGain (e.gainDb));
 
+            // Source window: forwards, output sample k plays offset + k*step. Reversed, the same window
+            // is played back to front: sample k plays offset + (L-1-k)*step, i.e. it starts at the far
+            // end and walks down (negative step). Sample-exact mirror of the forward rendering.
             const double frames = data.numFrames();
-            pe.sourceStart = e.sourceOffsetSeconds * data.sampleRate;
-            if (pe.looping) pe.sourceStart = std::fmod (pe.sourceStart, frames);
-
-            // Declick only where the event cuts into the waveform (not at natural loop boundaries).
-            pe.fadeIn = pe.sourceStart > 0.5;
-            const double sourceEnd = pe.sourceStart + static_cast<double> (pe.end - pe.start) * pe.step;
-            if (pe.looping)
+            const double offsetFrames = e.sourceOffsetSeconds * data.sampleRate;
+            const auto lengthSamples = pe.end - pe.start;
+            if (e.reversed)
             {
-                const double m = std::fmod (sourceEnd, frames);
-                pe.fadeOut = m > 0.5 && m < frames - 0.5;
+                pe.sourceStart = offsetFrames + static_cast<double> (lengthSamples - 1) * step;
+                pe.step = -step;
             }
             else
-                pe.fadeOut = sourceEnd < frames - 0.5;
+            {
+                pe.sourceStart = offsetFrames;
+                pe.step = step;
+            }
+            if (pe.looping)
+            {
+                pe.sourceStart = std::fmod (pe.sourceStart, frames);
+                if (pe.sourceStart < 0) pe.sourceStart += frames;
+            }
+
+            // Unified edge fades: the event's own fade or the Default declick time, whichever is longer,
+            // never longer than the event. One envelope per edge - there is no separate declick.
+            auto edge = [&] (Tick fadeTicks)
+            {
+                const auto fade = fadeTicks > 0 ? ticksToSamples (fadeTicks, project.bpm, plan->sampleRate) : 0;
+                return std::min<std::int64_t> (effectiveFadeSamples (fade, declick), lengthSamples);
+            };
+            pe.fadeInSamples = edge (e.fadeInTicks);
+            pe.fadeOutSamples = edge (e.fadeOutTicks);
+            pe.fadeInCurve = e.fadeInCurve;
+            pe.fadeOutCurve = e.fadeOutCurve;
 
             ch.events.push_back (pe);
         }

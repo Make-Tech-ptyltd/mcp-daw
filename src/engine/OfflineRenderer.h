@@ -16,6 +16,7 @@ struct RenderOptions
     Tick end = 0;                 // 0 = end of content
     double tailSeconds = 2.0;     // extra time for reverb/delay tails
     int bitDepth = 24;            // 16, 24 or 32 (float)
+    double declickMs = kDefaultDeclickMs;   // Default declick time (minimum event fade), as in live playback
 };
 
 struct RenderStats

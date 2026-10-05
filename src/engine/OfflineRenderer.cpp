@@ -15,7 +15,7 @@ RenderStats runRender (const Project& project, const RenderOptions& options, Sin
 {
     if (options.sampleRate < 8000 || options.sampleRate > 384000) throw std::runtime_error ("Render sample rate out of range");
     RuntimeRegistry registry (options.sampleRate, PlanRenderer::kMaxBlock);
-    auto plan = PlaybackPlan::build (project, registry);
+    auto plan = PlaybackPlan::build (project, registry, options.declickMs);
     plan->loopEnabled = false;   // a bounce is linear
 
     const Tick endTick = options.end > 0 ? options.end : project.contentEnd();
@@ -119,6 +119,7 @@ void registerEngineActions (ActionRegistry& r)
                  o.sampleRate = c.args.optNumber ("sampleRate").value_or (48000.0);
                  o.bitDepth = static_cast<int> (c.args.has ("bitDepth") ? c.args.integer ("bitDepth", 16, 32) : 24);
                  o.tailSeconds = c.args.optNumber ("tailSeconds").value_or (2.0);
+                 o.declickMs = c.controller.defaultDeclickMs();   // the bounce sounds exactly like playback
                  const auto stats = renderToWavFile (c.project(), o, file);
                  return makeObject ({ { "path", file.getFullPathName() }, { "seconds", stats.seconds }, { "frames", static_cast<juce::int64> (stats.frames) },
                                       { "peakDb", gainToDb (stats.peak) }, { "clipped", stats.clipped } });

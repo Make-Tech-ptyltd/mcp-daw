@@ -60,11 +60,15 @@ struct PlanEvent
 {
     const AudioData* data = nullptr;
     std::int64_t start = 0, end = 0;   // timeline samples [start, end)
-    double sourceStart = 0;            // source frame at `start`
-    double step = 1;                   // source frames per output sample (rate conversion x pitch; stretch later)
+    double sourceStart = 0;            // source frame heard at `start`
+    double step = 1;                   // source frames per output sample (rate conversion x pitch; stretch later).
+                                       // NEGATIVE for a reversed event: playback walks the source backwards.
     bool looping = true;
     float gain = 1;
-    bool fadeIn = false, fadeOut = false;
+    // One edge envelope per side: effective length = max (event fade, Default declick), already
+    // resolved to samples at plan-build time (the audio thread never looks at preferences).
+    std::int64_t fadeInSamples = 0, fadeOutSamples = 0;
+    FadeCurve fadeInCurve = FadeCurve::Linear, fadeOutCurve = FadeCurve::Linear;
 };
 
 struct PlanChannel
@@ -96,6 +100,8 @@ struct PlaybackPlan
     }
     double samplesToBeats (std::int64_t s) const noexcept { return mcpdaw::samplesToBeats (s, bpm, sampleRate); }
 
-    static std::unique_ptr<PlaybackPlan> build (const Project&, RuntimeRegistry&);
+    /** Compile a project snapshot. `declickMs` is the application's Default declick time: the minimum
+        effective length of every event fade (0 = hard edges where an event has no fade). */
+    static std::unique_ptr<PlaybackPlan> build (const Project&, RuntimeRegistry&, double declickMs = kDefaultDeclickMs);
 };
 } // namespace mcpdaw

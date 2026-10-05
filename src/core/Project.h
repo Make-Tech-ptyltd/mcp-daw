@@ -16,6 +16,7 @@
 
 #include "AudioAsset.h"
 #include "EffectCatalogue.h"
+#include "Fades.h"
 #include "MusicalTime.h"
 #include <optional>
 #include <vector>
@@ -50,6 +51,16 @@ struct Asset
                             source time through rate().
       stretch               reserved: when the stretch subsystem lands, playback rate becomes
                             projectBpm / asset.sourceBpm for tempo-based assets. Currently plays at 1.0 (no stretching yet).
+
+    Edges and direction:
+      fadeInTicks/fadeOutTicks  musical edge fades (0 = none). The renderer never fades for less than the
+                                application's Default declick time (see Fades.h); that minimum is NOT stored
+                                here, so changing the preference changes every event's effective minimum.
+      fadeInCurve/fadeOutCurve  independent curve per edge.
+      reversed                  non-destructive reverse: the event plays the same window of source audio
+                                it would play forwards, back to front ("reverse what you see"). The asset
+                                is untouched; sourceOffsetSeconds is still the window's lowest source
+                                position, which for a reversed event is heard at the event's END.
 */
 struct Event
 {
@@ -61,10 +72,21 @@ struct Event
     bool looping = true;
     double gainDb = 0.0;
     double pitchSemitones = 0.0;
+    Tick fadeInTicks = 0;
+    Tick fadeOutTicks = 0;
+    FadeCurve fadeInCurve = FadeCurve::Linear;
+    FadeCurve fadeOutCurve = FadeCurve::Linear;
+    bool reversed = false;
 
     Tick end() const noexcept { return start + length; }
     /** Source seconds consumed per timeline second (pitch as varispeed). */
     double rate() const noexcept { return std::pow (2.0, pitchSemitones / 12.0); }
+    /** Keep each fade within the event (fades may overlap each other; they multiply). */
+    void clampFades() noexcept
+    {
+        fadeInTicks = std::clamp<Tick> (fadeInTicks, 0, length);
+        fadeOutTicks = std::clamp<Tick> (fadeOutTicks, 0, length);
+    }
 };
 
 inline constexpr double kMaxPitchSemitones = 12.0;
@@ -101,7 +123,9 @@ struct MasterBus
 
 struct Project
 {
-    static constexpr int kFormatVersion = 1;
+    /** Project file format. v1 = MCP DAW 0.4.0. v2 adds event fades, fade curves and reverse.
+        Older files load (new fields take their defaults); newer files are refused. */
+    static constexpr int kFormatVersion = 2;
     static constexpr int kMaxTracks = 128;
     static constexpr int kMaxEventsPerTrack = 4096;
     static constexpr int kMaxEffectsPerChain = 16;

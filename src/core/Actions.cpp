@@ -2,6 +2,7 @@
 // MCP DAW - Copyright (C) 2026 Make Tech Pty Ltd (maketech.com.au). See LICENSE.
 #include "Actions.h"
 #include "ProjectJson.h"
+#include "WavLoopMetadata.h"
 #include <stdexcept>
 
 namespace mcpdaw
@@ -125,6 +126,21 @@ double advancedOffset (const Project& p, const Event& e, Tick delta)
     return offset;
 }
 
+/** Clip `e` to the timeline range [s, en) (inside or beyond the event): the result plays exactly the
+    audio `e` plays there (reverse-aware source offset), keeps a fade only on an edge it shares with
+    `e`, and keeps its id (callers assign new ids where needed). */
+Event clippedEvent (const Project& p, const Event& e, Tick s, Tick en)
+{
+    Event c = e;
+    c.sourceOffsetSeconds = offsetForRange (p, e, s, en);
+    c.start = s;
+    c.length = en - s;
+    if (s != e.start) c.fadeInTicks = 0;
+    if (en != e.end()) c.fadeOutTicks = 0;
+    c.clampFades();
+    return c;
+}
+
 /** Default for new events: tempo-based assets loop; one-shots (ACID flag, or short with no tempo) don't. */
 bool loopsByDefault (const Asset& a)
 {
@@ -214,7 +230,152 @@ Track makeTrack (Project& p, const juce::String& name)
 }
 
 juce::String requireTransportMessage() { return "No audio engine is attached to this session"; }
+
+juce::StringArray fadeCurveNames() { return { "linear", "smooth", "fast", "slow" }; }
+
+/** Event ids from "eventIds" (array) and/or "eventId" (string), de-duplicated, never empty. */
+juce::StringArray eventIdsArg (const JsonArgs& a)
+{
+    juce::StringArray ids;
+    if (auto one = a.optString ("eventId")) ids.add (*one);
+    if (a.has ("eventIds"))
+        for (const auto& v : a.array ("eventIds"))
+        {
+            if (! v.isString()) a.fail ("'eventIds' must contain event id strings");
+            ids.addIfNotAlreadyThere (v.toString());
+        }
+    if (ids.isEmpty()) a.fail ("give eventIds (or eventId)");
+    return ids;
+}
+
+/** Optional fade arguments shared by create_event and set_event_fades. */
+struct FadeArgs
+{
+    std::optional<Tick> inTicks, outTicks;
+    std::optional<FadeCurve> inCurve, outCurve;
+
+    static FadeArgs parse (const JsonArgs& a)
+    {
+        FadeArgs f;
+        const double maxBeats = ticksToBeats (kMaxProjectTicks);
+        if (auto v = a.optNumber ("fadeInBeats", 0.0, maxBeats)) f.inTicks = beatsToTicks (*v);
+        if (auto v = a.optNumber ("fadeOutBeats", 0.0, maxBeats)) f.outTicks = beatsToTicks (*v);
+        auto curve = [&] (const char* key) -> std::optional<FadeCurve>
+        {
+            const auto name = a.optString (key);
+            if (! name) return std::nullopt;
+            const auto c = fadeCurveFromName (name->toRawUTF8());
+            if (! c) a.fail ("'" + juce::String (key) + "' must be one of " + fadeCurveNames().joinIntoString (", "));
+            return c;
+        };
+        f.inCurve = curve ("fadeInCurve");
+        f.outCurve = curve ("fadeOutCurve");
+        return f;
+    }
+    bool any() const noexcept { return inTicks || outTicks || inCurve || outCurve; }
+
+    /** Apply what was given; returns true if a length had to be clipped to the event. */
+    bool applyTo (Event& e) const
+    {
+        bool clipped = false;
+        if (inTicks) { e.fadeInTicks = std::min (*inTicks, e.length); clipped |= *inTicks > e.length; }
+        if (outTicks) { e.fadeOutTicks = std::min (*outTicks, e.length); clipped |= *outTicks > e.length; }
+        if (inCurve) e.fadeInCurve = *inCurve;
+        if (outCurve) e.fadeOutCurve = *outCurve;
+        return clipped;
+    }
+};
+
+LoopMetadata loopMetadataArgs (const JsonArgs& a, const WavLoopInfo& existing)
+{
+    // Start from what the file has (so unspecified fields keep their values), then apply arguments.
+    LoopMetadata m = existing.hasAcidChunk ? existing.metadata : LoopMetadata();
+    if (! existing.hasAcidChunk) { m.bpm = 0.0; m.beats = 0; }
+    if (auto type = a.optString ("type"))
+    {
+        if (*type == "loop") m.oneShot = false;
+        else if (*type == "one-shot") m.oneShot = true;
+        else a.fail ("'type' must be \"loop\" or \"one-shot\"");
+    }
+    if (auto v = a.optNumber ("bpm", 0.0, kMaxBpm)) m.bpm = *v;
+    if (a.has ("beats")) m.beats = static_cast<int> (a.integer ("beats", 0, 65535));
+    if (a.has ("numerator")) m.numerator = static_cast<int> (a.integer ("numerator", 1, 32));
+    if (a.has ("denominator")) m.denominator = static_cast<int> (a.integer ("denominator", 1, 32));
+    if (a.has ("rootNote"))
+    {
+        const auto note = a.integer ("rootNote", -1, 127);
+        m.rootNote = note < 0 ? std::nullopt : std::optional<int> (static_cast<int> (note));
+    }
+    if (auto v = a.optBoolean ("stretch")) m.stretch = *v;
+    else if (! existing.hasAcidChunk) m.stretch = ! m.oneShot;
+    return m;
+}
+
+juce::var loopMetadataJson (const LoopMetadata& m)
+{
+    // The chunk stores tempo as a 32-bit float: show it rounded (118.489, not 118.48899841308594).
+    auto o = makeObject ({ { "type", m.oneShot ? "one-shot" : "loop" }, { "bpm", std::round (m.bpm * 1.0e4) / 1.0e4 }, { "beats", m.beats },
+                           { "numerator", m.numerator }, { "denominator", m.denominator }, { "stretch", m.stretch && ! m.oneShot },
+                           { "rootNote", m.rootNote ? juce::var (*m.rootNote) : juce::var() },
+                           { "rootNoteName", m.rootNote ? juce::var (midiNoteName (*m.rootNote)) : juce::var() } });
+    return o;
+}
+
+juce::var wavInfoJson (const juce::File& f, const WavLoopInfo& info)
+{
+    auto o = makeObject ({ { "path", f.getFullPathName() }, { "supported", info.supported }, { "hasLoopMetadata", info.hasAcidChunk },
+                           { "durationSeconds", info.durationSeconds }, { "sampleRate", info.sampleRate }, { "channels", info.channels },
+                           { "bitsPerSample", info.bitsPerSample } });
+    if (info.problem.isNotEmpty()) o.getDynamicObject()->setProperty ("problem", info.problem);
+    if (info.hasAcidChunk)
+    {
+        o.getDynamicObject()->setProperty ("metadata", loopMetadataJson (info.metadata));
+        if (const double expected = info.metadata.expectedSeconds(); expected > 0)
+        {
+            const double diff = info.durationSeconds - expected;
+            o.getDynamicObject()->setProperty ("expectedDurationSeconds", expected);
+            o.getDynamicObject()->setProperty ("durationDifferenceSeconds", diff);
+            o.getDynamicObject()->setProperty ("durationMatches", std::abs (diff) <= std::max (0.005, expected * 0.001));
+        }
+    }
+    return o;
+}
 } // namespace
+
+double rawOffsetForRange (const Project& p, const Event& e, Tick newStart, Tick newEnd)
+{
+    // Forwards, the audio heard at the event's start sits at sourceOffsetSeconds, so moving the left
+    // edge moves the offset. Reversed, the offset is heard at the event's END, so the right edge does.
+    const Tick delta = e.reversed ? e.end() - newEnd : newStart - e.start;
+    return e.sourceOffsetSeconds + ticksToSeconds (delta, p.bpm) * e.rate();
+}
+
+double offsetForRange (const Project& p, const Event& e, Tick newStart, Tick newEnd)
+{
+    return advancedOffset (p, e, e.reversed ? e.end() - newEnd : newStart - e.start);
+}
+
+double slippedOffset (const Project& p, const Event& e, double deltaBeats, bool* clamped)
+{
+    if (clamped != nullptr) *clamped = false;
+    // Audio moving right by d: forwards the source position under any fixed point decreases by d (in
+    // source time); reversed it increases.
+    const double d = beatsToSeconds (deltaBeats, p.bpm) * e.rate();
+    double offset = e.sourceOffsetSeconds + (e.reversed ? d : -d);
+    const auto* a = p.findAsset (e.assetId);
+    const double duration = a != nullptr ? a->durationSeconds() : 0.0;
+    if (duration <= 0.0) return std::max (0.0, offset);
+    if (e.looping)
+    {
+        offset = std::fmod (offset, duration);
+        if (offset < 0) offset += duration;
+        return offset;
+    }
+    const double maxOffset = std::max (0.0, duration - 1.0 / std::max (1.0, a->data->sampleRate));   // keep at least one frame
+    const double limited = std::clamp (offset, 0.0, maxOffset);
+    if (clamped != nullptr && std::abs (limited - offset) > 1e-12) *clamped = true;
+    return limited;
+}
 
 void carveOut (Project& p, Track& track, Tick start, Tick end, const juce::String& keepId)
 {
@@ -229,18 +390,11 @@ void carveOut (Project& p, Track& track, Tick start, Tick end, const juce::Strin
             continue;
         }
         if (e.start < start)                       // keep the part before the carved region
-        {
-            Event left = e;
-            left.length = start - e.start;
-            result.push_back (left);
-        }
+            result.push_back (clippedEvent (p, e, e.start, start));
         if (e.end() > end)                         // keep the part after the carved region
         {
-            Event right = e;
+            Event right = clippedEvent (p, e, end, e.end());
             if (e.start < start) right.id = p.allocateId ("event");   // original id stays with the left part
-            right.sourceOffsetSeconds = advancedOffset (p, e, end - e.start);
-            right.start = end;
-            right.length = e.end() - end;
             result.push_back (right);
         }
     }
@@ -255,12 +409,10 @@ juce::String splitEventAt (Project& p, Track& track, const juce::String& eventId
         if (e.id != eventId) continue;
         if (at <= e.start || at >= e.end())
             fail ("Split position " + formatBarBeat (at) + " is not inside event " + eventId + " (" + formatBarBeat (e.start) + " - " + formatBarBeat (e.end()) + ")");
-        Event right = e;
+        // Left keeps the fade-in, right keeps the fade-out; the cut edges get only the declick.
+        Event right = clippedEvent (p, e, at, e.end());
         right.id = p.allocateId ("event");
-        right.start = at;
-        right.length = e.end() - at;
-        right.sourceOffsetSeconds = advancedOffset (p, e, at - e.start);
-        e.length = at - e.start;
+        e = clippedEvent (p, e, e.start, at);
         const auto id = right.id;
         track.events.push_back (std::move (right));
         sortEvents (track);
@@ -310,7 +462,7 @@ void registerCoreActions (ActionRegistry& r)
              "Complete semantic project state: tempo, loop region, assets (with tempo metadata), tracks with events "
              "(positions in zero-based beats plus bar.beat.tick strings, loop repetitions, occupied bars) and effect chains.",
              Schema().build(), K::Query,
-             [] (ActionContext& c) { return projectStateJson (c.project()); } });
+             [] (ActionContext& c) { return projectStateJson (c.project(), c.controller.defaultDeclickMs()); } });
 
     r.add ({ "list_tracks", "Summary of all tracks (id, name, mix settings, occupied bars, event count).", Schema().build(), K::Query,
              [] (ActionContext& c)
@@ -329,7 +481,7 @@ void registerCoreActions (ActionRegistry& r)
              {
                  const auto* t = c.project().findTrack (c.args.string ("trackId"));
                  if (t == nullptr) fail ("Track '" + c.args.string ("trackId") + "' not found");
-                 return trackJson (c.project(), *t);
+                 return trackJson (c.project(), *t, c.controller.defaultDeclickMs());
              } });
 
     r.add ({ "list_assets", "Imported audio sources with duration, sample rate and tempo metadata.", Schema().build(), K::Query,
@@ -661,7 +813,9 @@ void registerCoreActions (ActionRegistry& r)
              } });
 
     r.add ({ "create_event",
-             "Place an asset on a track. Overlapped parts of existing events on that track are replaced (loop-arranger overwrite, like painting over tape).",
+             "Place an asset on a track. Overlapped parts of existing events on that track are replaced (loop-arranger overwrite, like painting over tape). "
+             "Optional fades are set in the same step, e.g. a vocal at bar 9 with a two-beat fade-in -> {startBeat: 32, fadeInBeats: 2}. "
+             "Without fades the event still gets the tiny anti-click fade set by the Default declick time preference.",
              Schema().string ("trackId", "Track id").string ("assetId", "Asset id")
                      .number ("startBeat", "Start (zero-based beats)", true, 0.0)
                      .number ("lengthBeats", "Length in beats (default: natural length). Longer than the source repeats it when looping", false, 0.0)
@@ -669,6 +823,12 @@ void registerCoreActions (ActionRegistry& r)
                      .number ("sourceOffsetSeconds", "Start point inside the source", false, 0.0)
                      .number ("pitchSemitones", "Transpose, -12..+12 semitones (varispeed like a sampler: +12 = octave up, twice as fast)",
                               false, -kMaxPitchSemitones, kMaxPitchSemitones)
+                     .number ("gainDb", "Event gain in dB (default 0)", false, kMinDb, kMaxDb)
+                     .boolean ("reversed", "Play the event backwards (non-destructive; default false)", false)
+                     .number ("fadeInBeats", "Fade-in length in beats (default 0 = only the declick; clipped to the event length)", false, 0.0)
+                     .number ("fadeOutBeats", "Fade-out length in beats (default 0 = only the declick; clipped to the event length)", false, 0.0)
+                     .enumeration ("fadeInCurve", "Fade-in curve (default linear)", fadeCurveNames(), false)
+                     .enumeration ("fadeOutCurve", "Fade-out curve (default linear)", fadeCurveNames(), false)
                      .build(), K::Edit,
              [] (ActionContext& c)
              {
@@ -679,6 +839,9 @@ void registerCoreActions (ActionRegistry& r)
                  const auto looping = c.args.optBoolean ("looping");
                  const auto offset = c.args.optNumber ("sourceOffsetSeconds", 0.0, 1.0e6).value_or (0.0);
                  const auto pitch = c.args.optNumber ("pitchSemitones", -kMaxPitchSemitones, kMaxPitchSemitones).value_or (0.0);
+                 const auto gain = c.args.optNumber ("gainDb", kMinDb, kMaxDb).value_or (0.0);
+                 const bool reversed = c.args.optBoolean ("reversed").value_or (false);
+                 const auto fades = FadeArgs::parse (c.args);
                  return c.edit ("Create event", [&] (Project& p)
                  {
                      auto& t = requireTrack (p, trackId);
@@ -691,10 +854,13 @@ void registerCoreActions (ActionRegistry& r)
                      e.length = length.value_or (naturalLengthTicks (p, a, pitch));
                      e.looping = looping.value_or (loopsByDefault (a));
                      e.sourceOffsetSeconds = offset;
+                     e.gainDb = gain;
+                     e.reversed = reversed;
+                     fades.applyTo (e);
                      carveOut (p, t, e.start, e.end());
                      t.events.push_back (e);
                      sortEvents (t);
-                     return eventJson (p, e);
+                     return eventJson (p, e, c.controller.defaultDeclickMs());
                  });
              } });
 
@@ -744,14 +910,15 @@ void registerCoreActions (ActionRegistry& r)
                      const Tick end = newEnd.value_or (e.end());
                      const Tick start = newStart.value_or (e.start);
                      if (end <= start) fail ("Event would have zero or negative length");
-                     if (start != e.start)
-                     {
-                         const double offset = e.sourceOffsetSeconds + ticksToSeconds (start - e.start, p.bpm) * e.rate();
-                         if (offset < -1e-9 && ! e.looping) fail ("Cannot extend a non-looping event before the start of its source");
-                         e.sourceOffsetSeconds = advancedOffset (p, e, start - e.start);
-                         e.start = start;
-                     }
-                     e.length = end - e.start;
+                     // Audio stays in place: the source offset follows the edge that carries it (the left
+                     // edge forwards, the right edge when reversed).
+                     if (! e.looping && rawOffsetForRange (p, e, start, end) < -1e-9)
+                         fail (e.reversed ? "Cannot extend a reversed one-shot past the start of its source (drag the left edge instead)"
+                                          : "Cannot extend a non-looping event before the start of its source");
+                     e.sourceOffsetSeconds = offsetForRange (p, e, start, end);
+                     e.start = start;
+                     e.length = end - start;
+                     e.clampFades();
                      const Event copy = e;
                      carveOut (p, *ref.track, copy.start, copy.end(), copy.id);
                      return eventJson (p, copy);
@@ -886,13 +1053,109 @@ void registerCoreActions (ActionRegistry& r)
                  return c.edit ("Event looping", [&] (Project& p) { requireEvent (p, id).event->looping = on; return juce::var(); });
              } });
 
-    r.add ({ "set_event_gain", "Set per-event gain in dB.",
-             Schema().string ("eventId", "Event id").number ("db", "Gain in dB", true, kMinDb, kMaxDb).build(), K::Edit,
+    r.add ({ "set_event_gain", "Set event gain in dB (per-event volume; -70 = silent, max +12) on one event (eventId) or several (eventIds) as one undo step.",
+             Schema().string ("eventId", "Event id", false)
+                     .array ("eventIds", "Several events (alternative to eventId)", makeObject ({ { "type", "string" } }), false)
+                     .number ("db", "Gain in dB", true, kMinDb, kMaxDb).build(), K::Edit,
+             [] (ActionContext& c)
+             {
+                 const auto ids = eventIdsArg (c.args);
+                 const double db = c.args.number ("db", kMinDb, kMaxDb);
+                 return c.edit ("Adjust event gain", [&] (Project& p)
+                 {
+                     for (const auto& id : ids) requireEvent (p, id).event->gainDb = db;
+                     return makeObject ({ { "eventsChanged", ids.size() }, { "db", db } });
+                 });
+             } });
+
+    r.add ({ "set_event_fades",
+             "Set event fades on one or more events: fade-in/fade-out length in beats and curve (linear, smooth, fast, slow) for "
+             "each edge. Every argument is optional, so you can change one property and leave the rest, e.g. {eventIds:[...], fadeOutBeats:2}. "
+             "Fade-in and fade-out may overlap (they multiply). 0 means no deliberate fade: the edge still gets the tiny anti-click "
+             "fade set by the Default declick time preference (see get_project_state editing.defaultDeclickMs). Lengths beyond an "
+             "event are clipped to it.",
+             Schema().array ("eventIds", "Events to change", makeObject ({ { "type", "string" } }))
+                     .number ("fadeInBeats", "Fade-in length in beats", false, 0.0)
+                     .number ("fadeOutBeats", "Fade-out length in beats", false, 0.0)
+                     .enumeration ("fadeInCurve", "Fade-in curve", fadeCurveNames(), false)
+                     .enumeration ("fadeOutCurve", "Fade-out curve", fadeCurveNames(), false).build(), K::Edit,
+             [] (ActionContext& c)
+             {
+                 const auto ids = eventIdsArg (c.args);
+                 const auto fades = FadeArgs::parse (c.args);
+                 if (! fades.any()) c.args.fail ("give at least one of fadeInBeats, fadeOutBeats, fadeInCurve, fadeOutCurve");
+                 const bool lengths = fades.inTicks || fades.outTicks;
+                 return c.edit (lengths ? "Adjust event fade" : "Change fade curve", [&] (Project& p)
+                 {
+                     juce::Array<juce::var> events, clipped;
+                     for (const auto& id : ids)
+                     {
+                         auto& e = *requireEvent (p, id).event;
+                         if (fades.applyTo (e)) clipped.add (id);
+                         events.add (eventJson (p, e, c.controller.defaultDeclickMs()));
+                     }
+                     auto result = makeObject ({ { "events", events } });
+                     if (! clipped.isEmpty()) result.getDynamicObject()->setProperty ("clippedToEventLength", clipped);
+                     return result;
+                 });
+             } });
+
+    r.add ({ "set_event_reverse",
+             "Reverse event playback on or off for one or more events (explicit state). Non-destructive: the audio file is not "
+             "changed and other events using it are unaffected. A reversed event plays the same stretch of audio it shows, back "
+             "to front; fades, gain, looping, trimming and pitch all still apply.",
+             Schema().array ("eventIds", "Events to change", makeObject ({ { "type", "string" } }))
+                     .boolean ("enabled", "true = reversed, false = forwards").build(), K::Edit,
+             [] (ActionContext& c)
+             {
+                 const auto ids = eventIdsArg (c.args);
+                 const bool on = c.args.boolean ("enabled");
+                 return c.edit ("Reverse event", [&] (Project& p)
+                 {
+                     for (const auto& id : ids) requireEvent (p, id).event->reversed = on;
+                     return makeObject ({ { "eventsChanged", ids.size() }, { "reversed", on } });
+                 });
+             } });
+
+    r.add ({ "slip_event",
+             "Slip edit: move the source audio underneath an event while the event stays where it is (start, length and track "
+             "unchanged; only sourceOffsetSeconds changes). deltaBeats moves the audio later (positive = to the right) by that many "
+             "beats of timeline; or give the absolute sourceOffsetSeconds. Pitch (varispeed) and reverse are accounted for. "
+             "Looping events wrap around their source; one-shots are kept within their source (a relative move stops at the edge).",
+             Schema().string ("eventId", "Event id")
+                     .number ("deltaBeats", "Relative slip in beats (positive = audio moves right / later)", false)
+                     .number ("sourceOffsetSeconds", "Absolute source offset (alternative to deltaBeats)", false, 0.0).build(), K::Edit,
              [] (ActionContext& c)
              {
                  const auto id = c.args.string ("eventId");
-                 const double db = c.args.number ("db", kMinDb, kMaxDb);
-                 return c.edit ("Event gain", [&] (Project& p) { requireEvent (p, id).event->gainDb = db; return juce::var(); });
+                 const auto delta = c.args.optNumber ("deltaBeats", -ticksToBeats (kMaxProjectTicks), ticksToBeats (kMaxProjectTicks));
+                 const auto absolute = c.args.optNumber ("sourceOffsetSeconds", 0.0, 1.0e6);
+                 if (delta.has_value() == absolute.has_value()) c.args.fail ("give either deltaBeats or sourceOffsetSeconds");
+                 return c.edit ("Slip event", [&] (Project& p)
+                 {
+                     auto& e = *requireEvent (p, id).event;
+                     bool clamped = false, wrapped = false;
+                     if (delta) e.sourceOffsetSeconds = slippedOffset (p, e, *delta, &clamped);
+                     else
+                     {
+                         const auto* a = p.findAsset (e.assetId);
+                         const double duration = a != nullptr ? a->durationSeconds() : 0.0;
+                         double offset = *absolute;
+                         if (duration > 0 && offset >= duration)
+                         {
+                             if (! e.looping)
+                                 fail ("sourceOffsetSeconds " + juce::String (offset, 4) + " is beyond the end of the source ("
+                                       + juce::String (duration, 4) + " s) of one-shot event " + id);
+                             offset = std::fmod (offset, duration);
+                             wrapped = true;
+                         }
+                         e.sourceOffsetSeconds = offset;
+                     }
+                     auto result = eventJson (p, e);
+                     result.getDynamicObject()->setProperty ("clampedToSource", clamped);
+                     result.getDynamicObject()->setProperty ("wrapped", wrapped);
+                     return result;
+                 });
              } });
 
     r.add ({ "set_event_pitch",
@@ -933,6 +1196,7 @@ void registerCoreActions (ActionRegistry& r)
                                      if (other.id != e.id && other.start > e.start) limit = std::min (limit, other.start);
                                  e.pitchSemitones = semis;
                                  e.length = std::min (remaining (e.rate()), limit - e.start);
+                                 e.clampFades();
                                  ++refitted;
                                  continue;
                              }
@@ -986,10 +1250,8 @@ void registerCoreActions (ActionRegistry& r)
                          {
                              const Tick s = std::max (e.start, start), en = std::min (e.end(), end);
                              if (en <= s) continue;
-                             Event copy = e;
-                             copy.sourceOffsetSeconds = advancedOffset (p, e, s - e.start);
+                             Event copy = clippedEvent (p, e, s, en);
                              copy.start = dest + (s - start);
-                             copy.length = en - s;
                              copies.push_back (copy);
                          }
                          carveOut (p, t, dest, dest + (end - start));
@@ -1270,10 +1532,19 @@ void registerCoreActions (ActionRegistry& r)
                  if (c.controller.isDirty() && ! c.args.optBoolean ("discardChanges").value_or (false))
                      fail ("The project has unsaved changes; pass discardChanges=true or save first");
                  const juce::File f (c.args.string ("path"));
-                 auto p = loadProjectFile (f);
+                 int version = Project::kFormatVersion;
+                 auto p = loadProjectFile (f, {}, &version);
                  if (c.controller.transport) { c.controller.transport->pause(); c.controller.transport->seekBeats (0); }
-                 c.controller.replaceProject (std::move (p), f);
-                 return projectStateJson (c.project());
+                 c.controller.replaceProject (std::move (p), f, version);
+                 auto state = projectStateJson (c.project(), c.controller.defaultDeclickMs());
+                 if (c.controller.upgradedFromVersion() > 0)
+                     state.getDynamicObject()->setProperty ("formatUpgrade", makeObject ({
+                         { "fromVersion", c.controller.upgradedFromVersion() }, { "toVersion", Project::kFormatVersion },
+                         { "originalFileProtected", true },
+                         { "suggestedPath", c.controller.suggestedUpgradedFile().getFullPathName() },
+                         { "note", "Opened and upgraded in memory; the original file is untouched. save_project without a path is refused "
+                                   "until the project is saved to a new file (pass path), so the original stays usable by older versions." } }));
+                 return state;
              } });
 
     r.add ({ "save_project",
@@ -1285,11 +1556,90 @@ void registerCoreActions (ActionRegistry& r)
                  juce::File f = c.args.has ("path") ? juce::File (c.args.string ("path")) : c.controller.currentFile();
                  if (f == juce::File()) fail ("No current file; give a path");
                  if (! f.hasFileExtension ("mcpdaw")) f = f.withFileExtension ("mcpdaw");
-                 if (f.existsAsFile() && f != c.controller.currentFile() && ! c.args.optBoolean ("overwrite").value_or (false))
+                 const bool overwrite = c.args.optBoolean ("overwrite").value_or (false);
+                 // An upgraded older-format project must not silently replace its original file.
+                 if (c.controller.saveNeedsNewFile() && f == c.controller.currentFile() && ! (c.args.has ("path") && overwrite))
+                     fail ("This project was opened from an older format (v" + juce::String (c.controller.upgradedFromVersion())
+                           + ") file and upgraded to v" + juce::String (Project::kFormatVersion) + ". Save the upgraded project to a new file "
+                           "so the original stays usable by older versions: pass path (suggested: " + c.controller.suggestedUpgradedFile().getFullPathName()
+                           + "). To replace the original anyway, pass its path with overwrite=true.");
+                 if (f.existsAsFile() && f != c.controller.currentFile() && ! overwrite)
                      fail ("File exists: " + f.getFullPathName() + " (pass overwrite=true)");
                  saveProjectFile (c.project(), f);
                  c.controller.markSaved (f);
                  return makeObject ({ { "path", f.getFullPathName() } });
+             } });
+
+    // ---------------------------------------------------------------- loop metadata (WAV files)
+    r.add ({ "get_wav_loop_metadata",
+             "Inspect a WAV file's ACID-compatible loop metadata (type loop/one-shot, tempo, beats, time signature, root note, "
+             "stretch) and check it against the file's real duration (expected = beats * 60 / bpm). Also says whether "
+             "write_wav_loop_metadata can safely edit the file (conventional RIFF/WAVE only).",
+             Schema().string ("path", "Absolute .wav path").build(), K::Query,
+             [] (ActionContext& c)
+             {
+                 const juce::File f (c.args.string ("path"));
+                 if (! juce::File::isAbsolutePath (c.args.string ("path"))) c.args.fail ("path must be absolute");
+                 if (! f.existsAsFile()) c.args.fail ("file not found: " + f.getFullPathName());
+                 return wavInfoJson (f, readWavLoopMetadata (f));
+             } });
+
+    r.add ({ "write_wav_loop_metadata",
+             "Embed Loop Metadata: write ACID-compatible loop metadata into a WAV file without touching its audio (the PCM data "
+             "chunk is copied byte for byte and verified by SHA-256). Safest: give outputPath to save a copy. Updating the file in "
+             "place needs overwrite=true. Unspecified fields keep the file's existing values. Loops need bpm (20..300) and beats; "
+             "check durationMatches in the result. Conventional RIFF/WAVE only (RF64/Wave64 are refused). Assets already in the "
+             "project keep their current tempo (use set_asset_bpm).",
+             Schema().string ("path", "Absolute path of the source .wav")
+                     .string ("outputPath", "Write a copy here instead of updating the source", false)
+                     .boolean ("overwrite", "Required to update the source in place, or to replace an existing outputPath", false)
+                     .enumeration ("type", "loop (tempo-based, may be stretched) or one-shot", { "loop", "one-shot" }, false)
+                     .number ("bpm", "Tempo the material was played at", false, 0.0, kMaxBpm)
+                     .integer ("beats", "Musical length in beats", false, 0, 65535)
+                     .integer ("numerator", "Time signature numerator (default 4)", false, 1, 32)
+                     .integer ("denominator", "Time signature denominator (default 4)", false, 1, 32)
+                     .integer ("rootNote", "Root key as a MIDI note (60 = C4); -1 = none", false, -1, 127)
+                     .boolean ("stretch", "Loop may be tempo-matched (default true for loops)", false).build(), K::File,
+             [] (ActionContext& c)
+             {
+                 const auto pathText = c.args.string ("path");
+                 if (! juce::File::isAbsolutePath (pathText)) c.args.fail ("path must be absolute");
+                 const juce::File source (pathText);
+                 if (! source.existsAsFile()) c.args.fail ("file not found: " + source.getFullPathName());
+                 const bool overwrite = c.args.optBoolean ("overwrite").value_or (false);
+                 juce::File dest = source;
+                 if (auto out = c.args.optString ("outputPath"))
+                 {
+                     if (! juce::File::isAbsolutePath (*out)) c.args.fail ("outputPath must be absolute");
+                     dest = juce::File (*out);
+                     if (! dest.hasFileExtension ("wav")) dest = dest.withFileExtension ("wav");
+                 }
+                 if (dest == source && ! overwrite)
+                     c.args.fail ("updating " + source.getFileName() + " in place needs overwrite=true (or give outputPath to save a copy)");
+                 if (dest != source && dest.existsAsFile() && ! overwrite)
+                     c.args.fail ("file exists: " + dest.getFullPathName() + " (pass overwrite=true)");
+                 const auto existing = readWavLoopMetadata (source);
+                 if (! existing.supported) c.args.fail ("cannot edit " + source.getFileName() + ": " + existing.problem);
+                 const auto meta = loopMetadataArgs (c.args, existing);
+                 const auto result = writeWavLoopMetadata (source, dest, meta);
+                 auto o = wavInfoJson (dest, result.written);
+                 o.getDynamicObject()->setProperty ("updatedInPlace", dest == source);
+                 o.getDynamicObject()->setProperty ("createdChunk", result.createdChunk);
+                 o.getDynamicObject()->setProperty ("audioDataSha256", result.dataSha256);
+                 o.getDynamicObject()->setProperty ("audioDataUnchanged", true);
+                 return o;
+             } });
+
+    // ---------------------------------------------------------------- editing preference
+    r.add ({ "set_default_declick",
+             "Application preference (not part of the project, not undoable): the Default declick time in milliseconds, 0..20 "
+             "(default 1.5). Every event fade renders at least this long, so edges never click; 0 gives genuinely hard event "
+             "edges. Current value: get_project_state editing.defaultDeclickMs.",
+             Schema().number ("ms", "Declick time in milliseconds", true, 0.0, kMaxDeclickMs).build(), K::App,
+             [] (ActionContext& c)
+             {
+                 c.controller.setDefaultDeclickMs (c.args.number ("ms", 0.0, kMaxDeclickMs));
+                 return makeObject ({ { "defaultDeclickMs", c.controller.defaultDeclickMs() } });
              } });
 }
 

@@ -3,8 +3,10 @@
 // MCP DAW - Copyright (C) 2026 Make Tech Pty Ltd (maketech.com.au). See LICENSE.
 // JSON representations of the project.
 //
-//  * File format ("mcp-daw-project", version 1): human-readable, diff-friendly, versioned.
-//    Asset paths are stored relative to the project file when possible.
+//  * File format ("mcp-daw-project", version Project::kFormatVersion): human-readable, diff-friendly,
+//    versioned. Asset paths are stored relative to the project file when possible. Older versions load
+//    with defaults for fields they lack (the caller is told which version was read, so the UI can offer
+//    to save an upgraded copy); newer versions are refused.
 //  * State format: what MCP get_project_state returns. Same core fields plus derived, *semantic*
 //    information (bar/beat positions, source lengths, loop repetitions, occupied bars, effect
 //    parameters by name) so an agent never needs to infer anything from pixels.
@@ -20,12 +22,15 @@ juce::var projectToFileJson (const Project&, const juce::File& projectDirectory)
 
 /** Parses and validates; loads audio through `loader` (defaults to loadAudioFile).
     Throws std::runtime_error with a specific message on any problem (nothing partially applied). */
-Project projectFromFileJson (const juce::var& json, const juce::File& projectDirectory, const AssetLoader& loader = {});
+Project projectFromFileJson (const juce::var& json, const juce::File& projectDirectory, const AssetLoader& loader = {},
+                             int* formatVersionRead = nullptr);
 
 // --- state (MCP / inspection) --------------------------------------------------------------------
-juce::var projectStateJson (const Project&);
-juce::var trackJson (const Project&, const Track&);
-juce::var eventJson (const Project&, const Event&);
+// `declickMs` >= 0 adds the effective (rendered) fade durations to each event, computed with that
+// Default declick time; < 0 leaves them out.
+juce::var projectStateJson (const Project&, double declickMs = -1.0);
+juce::var trackJson (const Project&, const Track&, double declickMs = -1.0);
+juce::var eventJson (const Project&, const Event&, double declickMs = -1.0);
 juce::var assetJson (const Asset&);
 juce::var effectJson (const EffectInstance&, bool includeSpecs = false);
 juce::var effectTypeJson (const EffectDescriptor&);
@@ -41,5 +46,5 @@ juce::String occupiedBars (const Track&);
 
 /** Save/load helpers with atomic write (temp file + rename). Throw on failure. */
 void saveProjectFile (const Project&, const juce::File&);
-Project loadProjectFile (const juce::File&, const AssetLoader& loader = {});
+Project loadProjectFile (const juce::File&, const AssetLoader& loader = {}, int* formatVersionRead = nullptr);
 } // namespace mcpdaw

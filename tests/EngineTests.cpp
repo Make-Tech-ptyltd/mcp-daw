@@ -15,11 +15,14 @@ int firstNonZero (const juce::AudioBuffer<float>& b, int ch = 0, float threshold
     return -1;
 }
 
+/** Placement tests render with hard edges (Default declick time 0 ms) so an impulse on an event's
+    very first sample survives; the declick/fade envelope itself is covered by FadeTests. */
 RenderOptions opts (double sr = 48000, double tail = 0)
 {
     RenderOptions o;
     o.sampleRate = sr;
     o.tailSeconds = tail;
+    o.declickMs = 0.0;
     return o;
 }
 } // namespace
@@ -35,6 +38,7 @@ public:
 
         beginTest ("an event at beat 3 starts exactly at 1.5 s (120 BPM)");
         Session s;
+        s.controller.setDefaultDeclickMs (0.0);   // render_mix below uses the session preference
         s.run ("import_audio", args ({ { "path", impulse.getFullPathName() }, { "startBeat", 3 }, { "lengthBeats", 1 } }));
         auto out = renderToBuffer (s.project(), opts());
         expectEquals (firstNonZero (out), 72000);
@@ -150,6 +154,7 @@ public:
     {
         const auto impulse = impulseWav ("impulse_live.wav");
         Session s;
+        s.controller.setDefaultDeclickMs (0.0);   // hard edges: impulses on an event's first sample stay intact
         AudioEngine engine (s.controller);   // registers as transport + listener
         s.run ("import_audio", args ({ { "path", impulse.getFullPathName() }, { "startBeat", 1 }, { "lengthBeats", 1 } }));
 

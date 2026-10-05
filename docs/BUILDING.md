@@ -97,7 +97,7 @@ the guides as web pages and the licences (layout at the top of the script).
 
 ```bat
 pip install markdown
-python tools\package_release.py --build build\Release         :: -> dist\MCP-DAW-0.4.0-win64.zip
+python tools\package_release.py --build build\Release         :: -> dist\MCP-DAW-<version>-win64.zip
 ```
 
 GitHub Actions (`.github/workflows/build.yml`) does this for you:

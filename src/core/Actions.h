@@ -95,6 +95,18 @@ void registerAppActions (ActionRegistry&, std::shared_ptr<AppHooks> hooks);
 /** Remove/trim every event on `track` overlapping [start, end), except `keepId`. ACID-style overwrite. */
 void carveOut (Project&, Track& track, Tick start, Tick end, const juce::String& keepId = {});
 
+/** Source offset an event needs so that, resized to [newStart, newEnd), its audio stays where it
+    is on the timeline. Reverse-aware (a reversed event's offset is heard at its end, so it follows
+    the right edge). Looping events wrap into the source. */
+double offsetForRange (const Project&, const Event&, Tick newStart, Tick newEnd);
+/** The same without wrapping: negative = the edge would reach before the start of the source. */
+double rawOffsetForRange (const Project&, const Event&, Tick newStart, Tick newEnd);
+
+/** Slip edit: the source offset after moving the audio `deltaBeats` later (positive = right) under
+    the stationary event, accounting for pitch (varispeed) and direction. Looping events wrap;
+    one-shots are kept within the source (`clamped` reports whether that limited the move). */
+double slippedOffset (const Project&, const Event&, double deltaBeats, bool* clamped = nullptr);
+
 /** Split event at tick `at` (strictly inside). Returns the id of the right-hand part. */
 juce::String splitEventAt (Project&, Track& track, const juce::String& eventId, Tick at);
 
