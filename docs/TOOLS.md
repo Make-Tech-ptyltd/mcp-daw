@@ -1,14 +1,14 @@
 # MCP DAW tools
 
-Generated from MCP DAW by Make Tech 0.5.0 by `tools/gen_tool_reference.py` — 61 tools. Positions and lengths are **beats** (zero-based quarter notes; bar N starts at beat (N−1)×4), levels are **dB**, pan is −1…+1. From Python: `daw.call("<tool>", arg=value, ...)`.
+Generated from MCP DAW by Make Tech 0.5.0 by `tools/gen_tool_reference.py` — 62 tools. Positions and lengths are **beats** (zero-based quarter notes; bar N starts at beat (N−1)×4), levels are **dB**, pan is −1…+1. From Python: `daw.call("<tool>", arg=value, ...)`.
 
 ## Inspect
 
 ### `get_project_state`
 
-Complete semantic project state: tempo, loop region, assets (with tempo metadata), tracks with events (positions in zero-based beats plus bar.beat.tick strings, loop repetitions, occupied bars) and effect chains.
+Complete semantic project state: tempo, loop region, assets (with tempo metadata), tracks with events (positions in zero-based beats plus bar.beat.tick strings, loop repetitions, occupied bars) and effect chains. detail="compact" lists each effect's non-default values only (much smaller with EQs and delays).
 
-- *(no arguments)*
+- `detail` *(optional)* — `full` | `compact`. "full" (default) or "compact": effects as {id, type, bypassed, values} with only non-default values.
 
 ### `list_tracks`
 
@@ -21,6 +21,7 @@ Summary of all tracks (id, name, mix settings, occupied bars, event count).
 Full detail for one track.
 
 - `trackId` — string. Track id.
+- `detail` *(optional)* — `full` | `compact`. "full" (default) or "compact": effects as {id, type, bypassed, values} with only non-default values.
 
 ### `list_assets`
 
@@ -30,15 +31,17 @@ Imported audio sources with duration, sample rate and tempo metadata.
 
 ### `list_effect_types`
 
-Available native effect types with every parameter (id, range, unit, choices).
+Available native effect types with every parameter (id, range, unit, choices). Pass type for one effect's specification, or brief=true for just the types, names and descriptions.
 
-- *(no arguments)*
+- `type` *(optional)* — `eq` | `compressor` | `reverb` | `multitap_delay` | `distortion` | `chorus` | `phaser` | `tremolo`. Only this effect type.
+- `brief` *(optional)* — boolean. Types, names and descriptions only (no parameters).
 
 ### `get_effect_parameters`
 
-Current parameter values of an effect, with specs and display strings.
+Current parameter values of an effect, with specs and display strings. detail="values" omits the specs; "compact" returns only the values that differ from the defaults.
 
 - `effectId` — string. Effect id.
+- `detail` *(optional)* — `full` | `values` | `compact`. "full" (default), "values" or "compact".
 
 ### `get_history`
 
@@ -365,9 +368,18 @@ Copy everything between startBeat and endBeat to destBeat on the given tracks (a
 Insert a native effect into a track's chain or the master chain. Optionally set initial parameters (object of parameterId -> number, or choice name). Returns the effect with its id.
 
 - `target` — string. Track id, or "master".
-- `type` — `eq` | `compressor` | `reverb` | `multitap_delay` | `distortion`. Effect type.
+- `type` — `eq` | `compressor` | `reverb` | `multitap_delay` | `distortion` | `chorus` | `phaser` | `tremolo`. Effect type.
 - `index` *(optional)* — integer (0.0..). Chain position (default: end).
 - `parameters` *(optional)* — object. Initial parameter values.
+- `detail` *(optional)* — `full` | `compact`. "full" (default) or "compact": effects as {id, type, bypassed, values} with only non-default values.
+
+### `add_effect_preset`
+
+Insert a factory preset chain - ordinary effects, each fully editable afterwards and saved with all of its values - into a track's chain or the master chain, as one undo step. Presets: dubstep_pulse (distortion -> tremolo); dubstep_swell (tremolo -> distortion); triphop_drum_crunch (compressor -> distortion -> eq -> reverb); cinematic_synth_ambience (eq -> chorus -> reverb). Returns the new effect ids in chain order.
+
+- `target` — string. Track id, or "master".
+- `preset` — `dubstep_pulse` | `dubstep_swell` | `triphop_drum_crunch` | `cinematic_synth_ambience`. Preset id.
+- `index` *(optional)* — integer (0.0..). Chain position of the first effect (default: end).
 
 ### `remove_effect`
 
@@ -395,6 +407,7 @@ Set one or more effect parameters: values is an object of parameterId -> number 
 
 - `effectId` — string. Effect id.
 - `values` — object. parameterId -> value.
+- `detail` *(optional)* — `full` | `compact`. "full" (default: every parameter value) or "compact" (only the values set by this call).
 
 ### `set_effect_parameter`
 
@@ -446,6 +459,7 @@ Run several actions atomically as ONE undo step. If any action fails, all change
 
 - `actions` — array. Steps: [{action, arguments}].
 - `label` *(optional)* — string. Undo label.
+- `detail` *(optional)* — `full` | `compact`. "full" (default: every step's result) or "compact" (each result reduced to id, type and *Id/*Ids fields; $N references still see the full results).
 
 ### `undo`
 
@@ -627,3 +641,49 @@ Eight independent taps (tempo-synced or free ms) with level, pan and per-tap fee
 | `autogain` | on / off | on | Compensate the level so drive changes character, not loudness |
 | `mix` | 0 .. 1 % | 1 % | Wet/dry balance (parallel distortion) |
 | `output` | -24 .. 12 dB | 0 dB | Output trim |
+
+### `chorus` — Chorus
+
+Stereo chorus / flanger / vibrato: a modulated delay (JUCE DelayLine, Lagrange interpolation) with feedback. Chorus: delay 7-15 ms, depth 20-40%, mix 50%. Flanger: delay 1-3 ms, depth 70%+, feedback +/-50-80%. Vibrato: mix 100%, feedback 0, spread 0. Rate in Hz or synced to the tempo.
+
+| Parameter | Range | Default | Notes |
+| --- | --- | --- | --- |
+| `sync` | on / off | off | Tempo-synced (division) or free (rate in Hz) |
+| `rate` | 0.02 .. 10 Hz | 0.5 Hz | LFO speed when not synced |
+| `division` | 1/16 / 1/8 / 1/4 / 1/2 / 1 bar / 2 bars / 4 bars / 8 bars | 1 bar | Length of one full cycle when synced |
+| `restart` | Timeline / Event | Timeline | Timeline: cycles line up with the bar grid from beat 0. Event: each event onset on this track starts a new cycle (a seamless continuation, e.g. the right half of a split, does not) |
+| `phase` | 0 .. 360 deg | 0 deg | Starting point of the cycle: 0 = centre delay, rising (vibrato: pitch dips first) |
+| `depth` | 0 .. 1 % | 0.3 % | Modulation as a fraction of the centre delay (100% sweeps 0 to 2x) |
+| `delay` | 1 .. 30 ms | 7 ms | Centre delay: 1-3 ms flanger, 5-15 ms chorus |
+| `feedback` | -0.95 .. 0.95 % | 0 % | Delayed signal fed back (negative inverts; flanger resonance) |
+| `spread` | 0 .. 180 deg | 90 deg | LFO phase offset of the right channel (stereo width) |
+| `mix` | 0 .. 1 % | 0.5 % | Wet/dry balance (100% = vibrato) |
+
+### `phaser` — Phaser
+
+Six-stage phaser (first-order TPT all-passes, as juce::dsp::Phaser) with feedback, sweeping a log-spaced centre frequency. Rate in Hz or synced to the tempo; Restart=Event sweeps every note from the same point.
+
+| Parameter | Range | Default | Notes |
+| --- | --- | --- | --- |
+| `sync` | on / off | off | Tempo-synced (division) or free (rate in Hz) |
+| `rate` | 0.02 .. 10 Hz | 0.4 Hz | LFO speed when not synced |
+| `division` | 1/16 / 1/8 / 1/4 / 1/2 / 1 bar / 2 bars / 4 bars / 8 bars | 1 bar | Length of one full cycle when synced |
+| `restart` | Timeline / Event | Timeline | Timeline: cycles line up with the bar grid from beat 0. Event: each event onset on this track starts a new cycle (a seamless continuation, e.g. the right half of a split, does not) |
+| `phase` | 0 .. 360 deg | 0 deg | Starting point of the sweep: 0 = centre, rising; 90 = top; 270 = bottom |
+| `depth` | 0 .. 1 % | 0.5 % | Sweep width: 100% = +/-1.5 decades around the centre |
+| `centre` | 50 .. 10000 Hz | 1000 Hz | Centre frequency of the sweep |
+| `feedback` | -0.95 .. 0.95 % | 0.3 % | Resonance of the notches (negative inverts) |
+| `spread` | 0 .. 180 deg | 0 deg | LFO phase offset of the right channel (stereo sweep) |
+| `mix` | 0 .. 1 % | 0.5 % | Wet/dry balance (50% = deepest notches) |
+
+### `tremolo` — Tremolo
+
+Tempo-synced amplitude cycling. One cycle per division; the loudest point is unity gain, the quietest -depth dB (0 dB depth = no modulation). Restart=Event restarts the cycle at each event onset, for per-note pulses (e.g. distortion -> tremolo for a dubstep bass).
+
+| Parameter | Range | Default | Notes |
+| --- | --- | --- | --- |
+| `division` | 1/64 / 1/32 / 1/16 / 1/8 / 1/4 | 1/8 | Length of one full cycle (1/4 = one cycle per beat) |
+| `shape` | Sine / Triangle / Square | Sine | Sine, triangle or square (square edges are smoothed over ~1.5 ms) |
+| `depth` | 0 .. 60 dB | 12 dB | Attenuation at the quietest point (0 = bypass) |
+| `restart` | Timeline / Event | Timeline | Timeline: cycles line up with the bar grid from beat 0. Event: each event onset on this track starts a new cycle (a seamless continuation, e.g. the right half of a split, does not) |
+| `phase` | 0 .. 360 deg | 0 deg | Starting point in the cycle: 0 = loudest (pulse starts loud), 180 = quietest (starts silent and swells), 90 = halfway down |

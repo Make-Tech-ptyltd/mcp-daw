@@ -141,13 +141,11 @@ PlanRenderer::Result PlanRenderer::render (const PlaybackPlan& plan, std::int64_
 {
     jassert (n <= kMaxBlock);
     Result result;
-    const ProcessContext ctx { plan.sampleRate, plan.bpm, playing };
     const bool loop = playing && plan.loopEnabled && plan.loopEnd > plan.loopStart;
     if (loop && position >= plan.loopEnd) position = plan.loopStart;   // ACID: playhead beyond loop jumps back
 
     // Split the block into timeline segments at loop boundaries (a very short loop may wrap several times).
-    struct Segment { std::int64_t timelineStart; int bufferOffset, length; };
-    Segment segments[16];
+    TimelineSpan segments[16];
     int numSegments = 0;
     std::int64_t pos = position;
     for (int done = 0; done < n && numSegments < 16;)
@@ -161,6 +159,15 @@ PlanRenderer::Result PlanRenderer::render (const PlaybackPlan& plan, std::int64_
         if (loop && pos >= plan.loopEnd) pos = plan.loopStart;
     }
     result.newPosition = playing ? pos : position;
+
+    // Effects see the same timeline map (cycling effects derive their phase from it) - only while
+    // playing; stopped, they free-run so tails keep moving.
+    ProcessContext ctx { plan.sampleRate, plan.bpm, playing };
+    if (playing)
+    {
+        ctx.spans = segments;
+        ctx.numSpans = numSegments;
+    }
 
     masterBuffer.clear (0, n);
     float* mL = masterBuffer.getWritePointer (0);
@@ -180,6 +187,8 @@ PlanRenderer::Result PlanRenderer::render (const PlaybackPlan& plan, std::int64_
 
         float* l = trackBuffer.getWritePointer (0);
         float* r = trackBuffer.getWritePointer (1);
+        ctx.onsets = ch.onsets.data();
+        ctx.numOnsets = static_cast<int> (ch.onsets.size());
         for (auto* fx : ch.effects) fx->process (l, r, n, ctx);   // FX run while stopped so tails decay naturally
         applyGain (*ch.runtime, l, r, n, ch.gainL, ch.gainR);
         updatePeak (ch.runtime->peakL, peakOf (l, n));
@@ -188,6 +197,8 @@ PlanRenderer::Result PlanRenderer::render (const PlaybackPlan& plan, std::int64_
         juce::FloatVectorOperations::add (mR, r, n);
     }
 
+    ctx.onsets = nullptr;   // the master bus has no events of its own
+    ctx.numOnsets = 0;
     for (auto* fx : plan.master.effects) fx->process (mL, mR, n, ctx);
     applyGain (*plan.master.runtime, mL, mR, n, plan.master.gainL, plan.master.gainR);
 

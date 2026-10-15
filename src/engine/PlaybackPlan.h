@@ -78,7 +78,20 @@ struct PlanChannel
     bool audible = true;
     std::vector<PlanEvent> events;           // sorted by start
     std::vector<EffectProcessor*> effects;   // active (non-bypassed) processors in order
+    /** Timeline samples (ascending, unique) where a new note begins on this track: every event start
+        except a seamless continuation of the event ending there (see isContinuation()). Effects with
+        Restart = Event start a new cycle at each one. Empty on the master bus. */
+    std::vector<std::int64_t> onsets;
 };
+
+/** True when `next` carries on exactly where `prev` stops, so a listener hears one note, not two:
+    it starts at prev's end, plays the same asset at the same pitch, direction and looping mode
+    from the source position where prev stopped, and neither edge has a deliberate fade. This is
+    what split_event produces; back-to-back copies of a one-shot are NOT continuations (each is a new
+    hit). Copies of a looping event that is a whole number of loop cycles long sound exactly like one
+    longer event, so they count as one. Gain may differ (splitting to change the level of part of a
+    note does not restart it). */
+bool isContinuation (const Project&, const Event& prev, const Event& next);
 
 struct PlaybackPlan
 {

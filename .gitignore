@@ -11,3 +11,6 @@ __pycache__/
 !/demo/samples/*.wav
 !/Samples-Starter-Kit/*.wav
 !/demo/kens-demo-*.mcpdaw
+# The example songs: their projects and samples ship too (renders in their out/ folders stay local)
+!/examples/songs/samples/*.wav
+!/examples/songs/*/*.mcpdaw

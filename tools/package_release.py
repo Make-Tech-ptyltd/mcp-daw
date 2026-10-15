@@ -16,6 +16,7 @@ gives the same zip for a local check. Layout of the zip (one top-level folder):
         Demo/                  Run Demo.cmd, the demo script, the three songs, their samples
         Samples-Starter-Kit/   the starter samples (the browser opens this folder on first run)
         Scripting/             mcp_daw.py, example scripts, SCRIPTING.html, TOOLS.html
+        Examples/songs/        example songs: the script that builds each one, its project, shared samples
         Licences/              LICENSE.txt (AGPL), THIRD_PARTY_NOTICES.txt, OFL.txt, SOURCE.txt
 """
 from __future__ import annotations
@@ -136,6 +137,13 @@ def build_zip(build: Path, out_dir: Path, platform: str, source_url: str, ref: s
     files.append(("Scripting/SCRIPTING.html",
                   md_to_html(REPO / "docs" / "SCRIPTING.md", version, {"TOOLS.md": "TOOLS.html"}).encode("utf-8")))
     files.append(("Scripting/TOOLS.html", md_to_html(REPO / "docs" / "TOOLS.md", version, {}).encode("utf-8")))
+    # Example songs keep the repo layout (Examples/songs/<song>/), so their relative sample paths -
+    # ../samples/ and ../../../Samples-Starter-Kit/ - resolve the same way in the zip. Local renders (out/) stay out.
+    examples = REPO / "examples"
+    for f in sorted(examples.rglob("*")):
+        rel = f.relative_to(examples)
+        if f.is_file() and "__pycache__" not in rel.parts and "out" not in rel.parts:
+            files.append(("Examples/" + rel.as_posix(), f))
 
     files.append(("Licences/LICENSE.txt", crlf((REPO / "LICENSE").read_text(encoding="utf-8"))))
     files.append(("Licences/THIRD_PARTY_NOTICES.txt", crlf((REPO / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8"))))

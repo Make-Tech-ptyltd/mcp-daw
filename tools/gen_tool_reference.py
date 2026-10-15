@@ -30,7 +30,7 @@ GROUPS = [   # (heading, tool names in order); anything not listed lands in "Oth
     ("Loop metadata (WAV files)", ["get_wav_loop_metadata", "write_wav_loop_metadata"]),
     ("Preferences", ["set_default_declick"]),
     ("Arrangement", ["clear_range", "duplicate_range"]),
-    ("Effects", ["add_effect", "remove_effect", "move_effect", "set_effect_bypass", "set_effect_parameters",
+    ("Effects", ["add_effect", "add_effect_preset", "remove_effect", "move_effect", "set_effect_bypass", "set_effect_parameters",
                  "set_effect_parameter"]),
     ("Transport", ["play", "stop", "pause", "seek", "set_loop_region"]),
     ("Edits as one step, undo", ["execute_batch", "undo", "redo"]),

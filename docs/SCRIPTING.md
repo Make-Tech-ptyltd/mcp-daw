@@ -10,6 +10,8 @@ Everything you need:
 * [`TOOLS.md`](TOOLS.md) — every tool, its arguments, and every effect parameter.
 * MCP DAW itself (`MCP-DAW.exe` + `mcp-daw-bridge.exe`). It doesn't need to be open: the first
   command opens it.
+* Worked examples: the **example songs** (`examples/songs/` in the source, `Examples/songs/` in the
+  download) — full songs built by scripts, with notes on the techniques they use.
 
 > **Tip for AI models:** give the model this file and `TOOLS.md` and ask it to write a script that
 > uses `mcp_daw.py`. The rules below are all it needs.
@@ -82,8 +84,13 @@ each part becomes its own undo step.
 
 **Effects.** `add_effect(target=<trackId or "master">, type=..., parameters={...})`, then
 `set_effect_parameters(effectId, values={...})`. Types: `eq`, `compressor`, `reverb`,
-`multitap_delay`, `distortion`. Parameter ids and ranges are in [`TOOLS.md`](TOOLS.md#effect-parameters);
-choice parameters accept names (`"tap1.division": "1/8D"`, `"type": "Warm"`).
+`multitap_delay`, `distortion`, `chorus`, `phaser`, `tremolo`. Parameter ids and ranges are in
+[`TOOLS.md`](TOOLS.md#effect-parameters) (or `list_effect_types(type="tremolo")`); choice parameters
+accept names (`"tap1.division": "1/8D"`, `"type": "Warm"`, `"restart": "Event"`).
+`add_effect_preset(target, preset="dubstep_pulse")` inserts a ready-made chain. Tremolo, chorus and
+phaser cycle inside the engine ([MODULATION.md](MODULATION.md)) — set them once; never "animate" a
+parameter with repeated calls. Pass `detail="compact"` to `get_project_state`, `add_effect`,
+`set_effect_parameters` or `execute_batch` for much smaller replies.
 
 **Taking turns.** One AI or script uses MCP DAW at a time. If another holds it, your call waits up
 to ~25 s for its turn, then raises `ToolError("MCP DAW is in use by …")`. Your script gives the

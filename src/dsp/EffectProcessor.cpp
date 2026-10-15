@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // MCP DAW - Copyright (C) 2026 Make Tech Pty Ltd (maketech.com.au). See LICENSE.
 #include "EffectProcessor.h"
+#include "Chorus.h"
 #include "Compressor.h"
 #include "Distortion.h"
 #include "MultiTapDelay.h"
 #include "ParametricEq.h"
+#include "Phaser.h"
 #include "Reverb.h"
+#include "Tremolo.h"
 
 namespace mcpdaw
 {
@@ -41,6 +44,9 @@ std::unique_ptr<EffectProcessor> createEffectProcessor (const juce::String& type
     if (type == "reverb")         return std::make_unique<FdnReverb> (*d);
     if (type == "multitap_delay") return std::make_unique<MultiTapDelay> (*d);
     if (type == "distortion")     return std::make_unique<Distortion> (*d);
+    if (type == "chorus")         return std::make_unique<Chorus> (*d);
+    if (type == "phaser")         return std::make_unique<Phaser> (*d);
+    if (type == "tremolo")        return std::make_unique<Tremolo> (*d);
     return nullptr;
 }
 } // namespace mcpdaw

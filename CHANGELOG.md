@@ -1,6 +1,31 @@
 # Changelog
 
-## 0.5.0 — event editing, loop metadata, project upgrade
+## 0.5.0 — event editing, modulation effects, loop metadata, project upgrade
+
+**Tremolo, chorus and phaser** (FX rack → *+ MOD*; details in `docs/MODULATION.md`)
+* **Tremolo:** one cycle per 1/64 … 1/4 note; sine, triangle or square; depth 0–60 dB (the loudest
+  point is unity, the quietest −depth dB; 0 dB = untouched); phase sets where each cycle starts
+  (0° loud, 180° silent). Square edges and every jump are smoothed into ~1.5 ms ramps.
+* **Chorus** (also flanger and vibrato) and **phaser**: rate in Hz or synced (1/16 … 8 bars), depth,
+  feedback, mix, centre delay / centre frequency, stereo spread. The algorithms and controls follow
+  `juce::dsp::Chorus` / `juce::dsp::Phaser`; the LFO is MCP DAW's own, because JUCE's free-runs from
+  reset with a private phase.
+* **Restart = Timeline or Event.** Timeline: cycles line up with the bar grid. Event: every note
+  (event onset) on the track restarts the cycle; starting playback, seeking or looping into the middle
+  of an event picks up the phase from that event's start, and the two halves of a split event stay
+  one note. The phase depends only on the timeline position, so playback, bounces and any audio
+  buffer size give the same result.
+* **Preset chains:** *Dubstep pulse*, *Dubstep swell*, *Trip-hop drum crunch*, *Cinematic synth
+  ambience* insert ordinary, editable effects; every value is saved in the project.
+* The modulation runs in the audio engine: it never edits the project, marks it modified or adds undo
+  steps.
+
+**Example songs** (`examples/songs/`, and *Examples* in the download)
+* *Tears in the Dust* (Blade Runner-style pads over a Jay Dilla-style break, 16 bars) and *Croydon
+  After Dark* (a Benga-style dubstep live set, 32 bars): each project plus the Python script that
+  builds it live over MCP. `--seed` makes new variations; the scripts are written for people and
+  AIs to learn from.
+
 
 **Event editing**
 * **Event gain** by dragging an event's top line (0 dB at the top, down to silence). The waveform is
@@ -35,14 +60,21 @@
   *Save Copy…* leaves the original untouched. RF64/Wave64 files are refused.
 
 **Projects**
-* Project format **v2** (adds event fades, fade curves and reverse). v1 projects from 0.4.0 open
+* Project format **v2** (adds event fades, fade curves and reverse; projects may also contain the new
+  effect types). v1 projects from 0.4.0 open
   normally and are upgraded in memory; MCP DAW offers **Save Upgraded Copy…** (`<name>-v2.mcpdaw`)
   and never silently overwrites the older file — Save asks for a new name until the upgraded project
   has been saved to one. Projects from newer versions are refused as before.
 
-**AI control (MCP)** — 61 tools
+**AI control (MCP)** — 62 tools
 * New: `set_event_fades`, `set_event_reverse`, `slip_event`, `get_wav_loop_metadata`,
-  `write_wav_loop_metadata`, `set_default_declick`.
+  `write_wav_loop_metadata`, `set_default_declick`, `add_effect_preset`.
+* Effect types `tremolo`, `chorus`, `phaser` for `add_effect`.
+* Smaller responses on request, existing responses unchanged by default: `detail: "compact"` on
+  `get_project_state` / `get_track` (each effect as its non-default values only), `add_effect`,
+  `set_effect_parameters` (only the values just set) and `execute_batch` (each step's ids only;
+  `$N` references still see full results); `get_effect_parameters` takes `detail: "values"` or
+  `"compact"`; `list_effect_types` takes `type` (one effect) or `brief`.
 * `create_event` takes `fadeInBeats`, `fadeOutBeats`, `fadeInCurve`, `fadeOutCurve`, `gainDb` and
   `reversed`; `set_event_gain` takes `eventIds` for several events at once.
 * Project state shows each event's `reversed`, fades and curves, and the effective (rendered) fade
@@ -55,6 +87,8 @@
   at the asset's start/end. Very sharp transients (a kick's first millisecond) are softened by a
   1.5 ms ramp, and back-to-back copies of a loop get a ~3 ms dip at each join. Setting the Default
   declick time to 0 ms removes the automatic ramp everywhere (hard edges; draw fades where needed).
+* Effect displays show a + sign only on boost/cut ranges: Drive, Makeup and Knee read "12.0 dB",
+  not "+12.0 dB".
 
 ## 0.4.0 — first public beta
 

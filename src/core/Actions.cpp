@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // MCP DAW - Copyright (C) 2026 Make Tech Pty Ltd (maketech.com.au). See LICENSE.
 #include "Actions.h"
+#include "EffectPresets.h"
 #include "ProjectJson.h"
 #include "WavLoopMetadata.h"
 #include <stdexcept>
@@ -231,6 +232,32 @@ Track makeTrack (Project& p, const juce::String& name)
 
 juce::String requireTransportMessage() { return "No audio engine is attached to this session"; }
 
+// Optional "detail" argument: "full" (the default, unchanged responses for existing clients) or
+// "compact" (identities and only what matters, to save tokens on routine reads and edits).
+const juce::StringArray kDetailLevels { "full", "compact" };
+constexpr const char* kDetailHelp = "\"full\" (default) or \"compact\": effects as {id, type, bypassed, values} with only non-default values";
+
+bool compactDetail (const ActionContext& c)
+{
+    const auto detail = c.args.optString ("detail").value_or ("full");
+    if (! kDetailLevels.contains (detail)) c.args.fail ("detail must be \"full\" or \"compact\"");
+    return detail == "compact";
+}
+
+/** Keep only identity fields of a step result: id, type, and anything named *Id / *Ids. */
+juce::var compactResult (const juce::var& result)
+{
+    auto* obj = result.getDynamicObject();
+    if (obj == nullptr) return {};
+    auto* out = new juce::DynamicObject();
+    for (const auto& kv : obj->getProperties())
+    {
+        const auto key = kv.name.toString();
+        if (key == "id" || key == "type" || key.endsWith ("Id") || key.endsWith ("Ids")) out->setProperty (kv.name, kv.value);
+    }
+    return juce::var (out);
+}
+
 juce::StringArray fadeCurveNames() { return { "linear", "smooth", "fast", "slow" }; }
 
 /** Event ids from "eventIds" (array) and/or "eventId" (string), de-duplicated, never empty. */
@@ -460,9 +487,10 @@ void registerCoreActions (ActionRegistry& r)
     // ---------------------------------------------------------------- queries
     r.add ({ "get_project_state",
              "Complete semantic project state: tempo, loop region, assets (with tempo metadata), tracks with events "
-             "(positions in zero-based beats plus bar.beat.tick strings, loop repetitions, occupied bars) and effect chains.",
-             Schema().build(), K::Query,
-             [] (ActionContext& c) { return projectStateJson (c.project(), c.controller.defaultDeclickMs()); } });
+             "(positions in zero-based beats plus bar.beat.tick strings, loop repetitions, occupied bars) and effect chains. "
+             "detail=\"compact\" lists each effect's non-default values only (much smaller with EQs and delays).",
+             Schema().enumeration ("detail", kDetailHelp, kDetailLevels, false).build(), K::Query,
+             [] (ActionContext& c) { return projectStateJson (c.project(), c.controller.defaultDeclickMs(), compactDetail (c)); } });
 
     r.add ({ "list_tracks", "Summary of all tracks (id, name, mix settings, occupied bars, event count).", Schema().build(), K::Query,
              [] (ActionContext& c)
@@ -476,12 +504,13 @@ void registerCoreActions (ActionRegistry& r)
                  return juce::var (list);
              } });
 
-    r.add ({ "get_track", "Full detail for one track.", Schema().string ("trackId", "Track id").build(), K::Query,
+    r.add ({ "get_track", "Full detail for one track.",
+             Schema().string ("trackId", "Track id").enumeration ("detail", kDetailHelp, kDetailLevels, false).build(), K::Query,
              [] (ActionContext& c)
              {
                  const auto* t = c.project().findTrack (c.args.string ("trackId"));
                  if (t == nullptr) fail ("Track '" + c.args.string ("trackId") + "' not found");
-                 return trackJson (c.project(), *t, c.controller.defaultDeclickMs());
+                 return trackJson (c.project(), *t, c.controller.defaultDeclickMs(), compactDetail (c));
              } });
 
     r.add ({ "list_assets", "Imported audio sources with duration, sample rate and tempo metadata.", Schema().build(), K::Query,
@@ -492,20 +521,39 @@ void registerCoreActions (ActionRegistry& r)
                  return juce::var (list);
              } });
 
-    r.add ({ "list_effect_types", "Available native effect types with every parameter (id, range, unit, choices).", Schema().build(), K::Query,
-             [] (ActionContext&)
+    juce::StringArray effectTypeNames;
+    for (const auto& d : effectCatalogue()) effectTypeNames.add (d.type);
+
+    r.add ({ "list_effect_types",
+             "Available native effect types with every parameter (id, range, unit, choices). Pass type for one effect's "
+             "specification, or brief=true for just the types, names and descriptions.",
+             Schema().enumeration ("type", "Only this effect type", effectTypeNames, false)
+                     .boolean ("brief", "Types, names and descriptions only (no parameters)", false).build(), K::Query,
+             [] (ActionContext& c)
              {
+                 const auto only = c.args.optString ("type");
+                 if (only && findEffectType (*only) == nullptr) c.args.fail ("unknown effect type '" + *only + "'");
+                 const bool brief = c.args.optBoolean ("brief").value_or (false);
                  juce::Array<juce::var> list;
-                 for (const auto& d : effectCatalogue()) list.add (effectTypeJson (d));
+                 for (const auto& d : effectCatalogue())
+                     if (! only || d.type == *only) list.add (brief ? effectTypeBriefJson (d) : effectTypeJson (d));
                  return juce::var (list);
              } });
 
-    r.add ({ "get_effect_parameters", "Current parameter values of an effect, with specs and display strings.",
-             Schema().string ("effectId", "Effect id").build(), K::Query,
+    r.add ({ "get_effect_parameters",
+             "Current parameter values of an effect, with specs and display strings. detail=\"values\" omits the specs; "
+             "\"compact\" returns only the values that differ from the defaults.",
+             Schema().string ("effectId", "Effect id")
+                     .enumeration ("detail", "\"full\" (default), \"values\" or \"compact\"", { "full", "values", "compact" }, false).build(),
+             K::Query,
              [] (ActionContext& c)
              {
                  const auto* fx = c.project().findEffect (c.args.string ("effectId"));
                  if (fx == nullptr) fail ("Effect '" + c.args.string ("effectId") + "' not found");
+                 const auto detail = c.args.optString ("detail").value_or ("full");
+                 if (detail == "values") return effectJson (*fx, false);
+                 if (detail == "compact") return effectCompactJson (*fx);
+                 if (detail != "full") c.args.fail ("detail must be \"full\", \"values\" or \"compact\"");
                  return effectJson (*fx, true);
              } });
 
@@ -1276,13 +1324,15 @@ void registerCoreActions (ActionRegistry& r)
              "(object of parameterId -> number, or choice name). Returns the effect with its id.",
              Schema().string ("target", "Track id, or \"master\"").enumeration ("type", "Effect type", effectTypes)
                      .integer ("index", "Chain position (default: end)", false, 0)
-                     .object ("parameters", "Initial parameter values", false).build(), K::Edit,
+                     .object ("parameters", "Initial parameter values", false)
+                     .enumeration ("detail", kDetailHelp, kDetailLevels, false).build(), K::Edit,
              [] (ActionContext& c)
              {
                  const auto target = c.args.string ("target");
                  const auto type = c.args.string ("type");
                  const auto index = c.args.optNumber ("index");
                  const auto params = c.args.has ("parameters") ? c.args.raw()["parameters"] : juce::var();
+                 const bool compact = compactDetail (c);
                  return c.edit ("Add " + type, [&] (Project& p)
                  {
                      auto fx = makeEffect (p, type);
@@ -1297,7 +1347,39 @@ void registerCoreActions (ActionRegistry& r)
                      auto& chain = chainForTarget (p, target);
                      const auto at = index ? std::min<size_t> (static_cast<size_t> (*index), chain.size()) : chain.size();
                      chain.insert (chain.begin() + static_cast<std::ptrdiff_t> (at), fx);
-                     return effectJson (fx, false);
+                     return compact ? effectCompactJson (fx) : effectJson (fx, false);
+                 });
+             } });
+
+    juce::StringArray presetIds, presetLines;
+    for (const auto& pr : effectPresets())
+    {
+        presetIds.add (pr.id);
+        juce::StringArray types;
+        for (const auto& step : pr.chain) types.add (step.type);
+        presetLines.add (pr.id + " (" + types.joinIntoString (" -> ") + ")");
+    }
+    r.add ({ "add_effect_preset",
+             "Insert a factory preset chain - ordinary effects, each fully editable afterwards and saved with all of its values - "
+             "into a track's chain or the master chain, as one undo step. Presets: " + presetLines.joinIntoString ("; ")
+             + ". Returns the new effect ids in chain order.",
+             Schema().string ("target", "Track id, or \"master\"").enumeration ("preset", "Preset id", presetIds)
+                     .integer ("index", "Chain position of the first effect (default: end)", false, 0).build(), K::Edit,
+             [] (ActionContext& c)
+             {
+                 const auto target = c.args.string ("target");
+                 const auto* preset = findEffectPreset (c.args.string ("preset"));
+                 if (preset == nullptr) c.args.fail ("unknown preset '" + c.args.string ("preset") + "'");
+                 const auto index = c.args.optNumber ("index");
+                 return c.edit ("Add " + preset->name, [&] (Project& p)
+                 {
+                     auto& chain = chainForTarget (p, target);
+                     auto added = instantiatePreset (p, *preset);
+                     const auto at = index ? std::min<size_t> (static_cast<size_t> (*index), chain.size()) : chain.size();
+                     juce::Array<juce::var> ids, effects;
+                     for (const auto& fx : added) { ids.add (fx.id); effects.add (effectCompactJson (fx)); }
+                     chain.insert (chain.begin() + static_cast<std::ptrdiff_t> (at), added.begin(), added.end());
+                     return makeObject ({ { "preset", preset->id }, { "name", preset->name }, { "effectIds", ids }, { "effects", effects } });
                  });
              } });
 
@@ -1345,21 +1427,29 @@ void registerCoreActions (ActionRegistry& r)
     r.add ({ "set_effect_parameters",
              "Set one or more effect parameters: values is an object of parameterId -> number (choice parameters also accept "
              "their name, e.g. {\"tap1.division\": \"1/8D\"}). Use get_effect_parameters or list_effect_types for ids and ranges.",
-             Schema().string ("effectId", "Effect id").object ("values", "parameterId -> value").build(), K::Edit,
+             Schema().string ("effectId", "Effect id").object ("values", "parameterId -> value")
+                     .enumeration ("detail", "\"full\" (default: every parameter value) or \"compact\" (only the values set by this call)",
+                                   kDetailLevels, false).build(), K::Edit,
              [] (ActionContext& c)
              {
                  const auto id = c.args.string ("effectId");
                  const auto values = c.args.object ("values");
+                 const bool compact = compactDetail (c);
                  return c.edit ("Effect parameters", [&] (Project& p)
                  {
                      auto& fx = requireEffect (p, id);
                      const auto* d = fx.descriptor();
+                     auto* set = new juce::DynamicObject();
+                     const juce::var setVar (set);
                      for (const auto& kv : values.raw().getDynamicObject()->getProperties())
                      {
                          const int i = d->indexOf (kv.name.toString());
                          if (i < 0) fail ("Effect " + id + " (" + fx.type + ") has no parameter '" + kv.name.toString() + "'");
-                         fx.values[static_cast<size_t> (i)] = parseParamValue (d->params[static_cast<size_t> (i)], kv.value);
+                         const auto& spec = d->params[static_cast<size_t> (i)];
+                         fx.values[static_cast<size_t> (i)] = parseParamValue (spec, kv.value);
+                         set->setProperty (kv.name, paramValueJson (spec, fx.values[static_cast<size_t> (i)]));
                      }
+                     if (compact) return makeObject ({ { "id", fx.id }, { "type", fx.type }, { "set", setVar } });
                      return effectJson (fx, false);
                  });
              } });
@@ -1409,11 +1499,14 @@ void registerCoreActions (ActionRegistry& r)
              "Run several actions atomically as ONE undo step. If any action fails, all changes are rolled back and the error names "
              "the failing step. Results are returned in order. Use \"$N.field\" in a string argument to reference field of the result "
              "of step N (0-based), e.g. {\"trackId\": \"$0.trackId\"}.",
-             Schema().array ("actions", "Steps: [{action, arguments}]", itemSchema).string ("label", "Undo label", false).build(), K::Edit,
+             Schema().array ("actions", "Steps: [{action, arguments}]", itemSchema).string ("label", "Undo label", false)
+                     .enumeration ("detail", "\"full\" (default: every step's result) or \"compact\" (each result reduced to id, type "
+                                   "and *Id/*Ids fields; $N references still see the full results)", kDetailLevels, false).build(), K::Edit,
              [] (ActionContext& c)
              {
                  const auto& steps = c.args.array ("actions");
                  if (steps.size() > 512) c.args.fail ("at most 512 steps per batch");
+                 const bool compact = compactDetail (c);
                  c.controller.beginTransaction (c.args.optString ("label").value_or ("Batch"), true);   // one plan rebuild, applied at once
                  juce::Array<juce::var> results;
 
@@ -1464,6 +1557,8 @@ void registerCoreActions (ActionRegistry& r)
                      fail ("The batch would leave the project invalid (all changes rolled back): " + juce::String (e.what()));
                  }
                  c.controller.endTransaction();
+                 if (compact)
+                     for (auto& result : results) result = compactResult (result);
                  return makeObject ({ { "results", results } });
              } });
 

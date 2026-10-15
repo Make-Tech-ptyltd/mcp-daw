@@ -37,7 +37,11 @@ juce::String McpSession::serverInstructions()
            "Levels are dB (-70 = silence), pan is -1..+1.\n"
            "Workflow: get_project_state first; import_audio places a loop on a new track; extend loops with resize_event(endBeat) "
            "or duplicate_event(count); use clear_range / duplicate_range for arrangement edits; effects via add_effect + "
-           "set_effect_parameters (see list_effect_types for parameter ids). Use execute_batch to make multi-step edits one undo step. "
+           "set_effect_parameters (see list_effect_types for parameter ids; list_effect_types(type) for one effect), or "
+           "add_effect_preset for a ready-made chain. Tremolo, chorus and phaser cycle inside the audio engine (synced to the "
+           "tempo, optionally restarting on each event): set them once, never animate parameters with repeated calls. "
+           "Use execute_batch to make multi-step edits one undo step. Pass detail=\"compact\" to get_project_state, "
+           "add_effect, set_effect_parameters and execute_batch for smaller responses. "
            "Every edit is undoable (undo). Audio plays unstretched: match loops to the project tempo (sourceBpm).\n"
            "If MCP DAW is not open, your first tool call opens it (allow a few seconds). Another AI or script may be "
            "using it; if a call says it is in use, wait and retry.";

@@ -20,11 +20,29 @@
 
 namespace mcpdaw
 {
+/** A run of consecutive block samples and the timeline sample the first of them plays. A block is
+    split into several spans where the transport loop wraps. */
+struct TimelineSpan
+{
+    std::int64_t timelineStart = 0;
+    int bufferOffset = 0, length = 0;
+};
+
 struct ProcessContext
 {
     double sampleRate = 48000.0;
     double bpm = 120.0;
     bool playing = false;
+
+    // Timeline map of this block: present (numSpans > 0) only while the transport plays. Effects that
+    // cycle (tremolo/chorus/phaser) derive their phase from it, so the result depends only on the
+    // timeline position - never on block size, seeks or when playback started.
+    const TimelineSpan* spans = nullptr;
+    int numSpans = 0;
+    // Timeline samples (ascending) where events on this chain's track begin a new note; see
+    // PlaybackPlan. Empty on the master bus (it has no events).
+    const std::int64_t* onsets = nullptr;
+    int numOnsets = 0;
 };
 
 class EffectProcessor

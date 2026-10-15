@@ -22,12 +22,14 @@ juce::String ParamSpec::format (float v) const
         case ParamKind::Choice: return choices[juce::jlimit (0, choices.size() - 1, juce::roundToInt (v))];
         case ParamKind::Continuous: break;
     }
-    if (unit == "Hz")  return v >= 1000.0f ? juce::String (v / 1000.0f, 2) + " kHz" : juce::String (juce::roundToInt (v)) + " Hz";
+    if (unit == "Hz")  return v >= 1000.0f ? juce::String (v / 1000.0f, 2) + " kHz"
+                            : v < 10.0f ? juce::String (v, 2) + " Hz" : juce::String (juce::roundToInt (v)) + " Hz";
+    if (unit == "deg") return juce::String (juce::roundToInt (v)) + juce::String (juce::CharPointer_UTF8 ("\xc2\xb0"));
     if (unit == "bit") return v >= 15.95f ? juce::String ("Off") : juce::String (v, 1) + " bit";
     if (unit == "x")   return v <= 1.01f ? juce::String ("Off") : juce::String (v, 1) + "x";
     if (unit == "%")   return juce::String (juce::roundToInt (v * 100.0f)) + " %";
     if (unit == "ms")  return v >= 1000.0f ? juce::String (v / 1000.0f, 2) + " s" : juce::String (v, v < 10.0f ? 1 : 0) + " ms";
-    if (unit == "dB")  return (v > 0 ? "+" : "") + juce::String (v, 1) + " dB";
+    if (unit == "dB")  return (v > 0 && min < 0 ? "+" : "") + juce::String (v, 1) + " dB";   // sign only on boost/cut ranges
     if (unit == ":1")  return juce::String (v, 1) + ":1";
     if (unit == "pan") return std::abs (v) < 0.005f ? juce::String ("C") : (v < 0 ? "L" : "R") + juce::String (juce::roundToInt (std::abs (v) * 100.0f));
     return juce::String (v, 2) + (unit.isEmpty() ? "" : " " + unit);
@@ -197,13 +199,114 @@ EffectDescriptor makeDistortion()
         cont ("output", "Output", "dB", -24.0f, 12.0f, 0.0f, 0.0f, "Output", "Output trim") };
     return d;
 }
+
+juce::StringArray divisionNames (const std::vector<std::pair<juce::String, double>>& list)
+{
+    juce::StringArray names;
+    for (const auto& [name, beats] : list) names.add (name);
+    return names;
+}
+
+// The cycling effects share the first five parameter ids and meanings (sync, rate, division, restart,
+// phase - the tremolo is always synced, so it has no sync/rate). The LFO runs inside the engine from
+// the timeline position; nothing outside the audio thread ever animates a parameter.
+ParamSpec restartParam()
+{
+    return choice ("restart", "Restart", modulation::restartNames(), static_cast<int> (modulation::Restart::Timeline), "Cycle",
+                   "Timeline: cycles line up with the bar grid from beat 0. Event: each event onset on this track starts a "
+                   "new cycle (a seamless continuation, e.g. the right half of a split, does not)");
+}
+
+ParamSpec phaseParam (const char* help)
+{
+    return cont ("phase", "Phase", "deg", 0.0f, 360.0f, 0.0f, 0.0f, "Cycle", help);
+}
+
+EffectDescriptor makeTremolo()
+{
+    EffectDescriptor d { "tremolo", "Tremolo",
+                         "Tempo-synced amplitude cycling. One cycle per division; the loudest point is unity gain, the quietest "
+                         "-depth dB (0 dB depth = no modulation). Restart=Event restarts the cycle at each event onset, for "
+                         "per-note pulses (e.g. distortion -> tremolo for a dubstep bass).", {} };
+    const auto divisions = divisionNames (modulation::tremoloDivisions());
+    d.params = {
+        choice ("division", "Division", divisions, divisions.indexOf ("1/8"), "Cycle", "Length of one full cycle (1/4 = one cycle per beat)"),
+        choice ("shape", "Shape", modulation::shapeNames(), static_cast<int> (modulation::Shape::Sine), "Cycle",
+                "Sine, triangle or square (square edges are smoothed over ~1.5 ms)"),
+        cont ("depth", "Depth", "dB", 0.0f, 60.0f, 12.0f, 18.0f, "Level", "Attenuation at the quietest point (0 = bypass)"),
+        restartParam(),
+        phaseParam ("Starting point in the cycle: 0 = loudest (pulse starts loud), 180 = quietest (starts silent and swells), "
+                    "90 = halfway down") };
+    return d;
+}
+
+EffectDescriptor makeChorus()
+{
+    EffectDescriptor d { "chorus", "Chorus",
+                         "Stereo chorus / flanger / vibrato: a modulated delay (JUCE DelayLine, Lagrange interpolation) with "
+                         "feedback. Chorus: delay 7-15 ms, depth 20-40%, mix 50%. Flanger: delay 1-3 ms, depth 70%+, feedback "
+                         "+/-50-80%. Vibrato: mix 100%, feedback 0, spread 0. Rate in Hz or synced to the tempo.", {} };
+    const auto divisions = divisionNames (modulation::sweepDivisions());
+    d.params = {
+        toggle ("sync", "Sync", false, "Cycle", "Tempo-synced (division) or free (rate in Hz)"),
+        cont ("rate", "Rate", "Hz", 0.02f, 10.0f, 0.5f, 1.0f, "Cycle", "LFO speed when not synced"),
+        choice ("division", "Division", divisions, divisions.indexOf ("1 bar"), "Cycle", "Length of one full cycle when synced"),
+        restartParam(),
+        phaseParam ("Starting point of the cycle: 0 = centre delay, rising (vibrato: pitch dips first)"),
+        cont ("depth", "Depth", "%", 0.0f, 1.0f, 0.3f, 0.0f, "Delay", "Modulation as a fraction of the centre delay (100% sweeps 0 to 2x)"),
+        cont ("delay", "Delay", "ms", 1.0f, 30.0f, 7.0f, 7.0f, "Delay", "Centre delay: 1-3 ms flanger, 5-15 ms chorus"),
+        cont ("feedback", "Feedback", "%", -0.95f, 0.95f, 0.0f, 0.0f, "Delay", "Delayed signal fed back (negative inverts; flanger resonance)"),
+        cont ("spread", "Spread", "deg", 0.0f, 180.0f, 90.0f, 0.0f, "Output", "LFO phase offset of the right channel (stereo width)"),
+        cont ("mix", "Mix", "%", 0.0f, 1.0f, 0.5f, 0.0f, "Output", "Wet/dry balance (100% = vibrato)") };
+    return d;
+}
+
+EffectDescriptor makePhaser()
+{
+    EffectDescriptor d { "phaser", "Phaser",
+                         "Six-stage phaser (first-order TPT all-passes, as juce::dsp::Phaser) with feedback, sweeping a log-spaced "
+                         "centre frequency. Rate in Hz or synced to the tempo; Restart=Event sweeps every note from the same point.", {} };
+    const auto divisions = divisionNames (modulation::sweepDivisions());
+    d.params = {
+        toggle ("sync", "Sync", false, "Cycle", "Tempo-synced (division) or free (rate in Hz)"),
+        cont ("rate", "Rate", "Hz", 0.02f, 10.0f, 0.4f, 1.0f, "Cycle", "LFO speed when not synced"),
+        choice ("division", "Division", divisions, divisions.indexOf ("1 bar"), "Cycle", "Length of one full cycle when synced"),
+        restartParam(),
+        phaseParam ("Starting point of the sweep: 0 = centre, rising; 90 = top; 270 = bottom"),
+        cont ("depth", "Depth", "%", 0.0f, 1.0f, 0.5f, 0.0f, "Sweep", "Sweep width: 100% = +/-1.5 decades around the centre"),
+        cont ("centre", "Centre", "Hz", 50.0f, 10000.0f, 1000.0f, 1000.0f, "Sweep", "Centre frequency of the sweep"),
+        cont ("feedback", "Feedback", "%", -0.95f, 0.95f, 0.3f, 0.0f, "Sweep", "Resonance of the notches (negative inverts)"),
+        cont ("spread", "Spread", "deg", 0.0f, 180.0f, 0.0f, 0.0f, "Output", "LFO phase offset of the right channel (stereo sweep)"),
+        cont ("mix", "Mix", "%", 0.0f, 1.0f, 0.5f, 0.0f, "Output", "Wet/dry balance (50% = deepest notches)") };
+    return d;
+}
 } // namespace
 
 juce::StringArray distortion::typeNames() { return { "Soft", "Warm", "Hard", "Fuzz", "Fold" }; }
 
+juce::StringArray modulation::restartNames() { return { "Timeline", "Event" }; }
+juce::StringArray modulation::shapeNames() { return { "Sine", "Triangle", "Square" }; }
+
+const std::vector<std::pair<juce::String, double>>& modulation::tremoloDivisions()
+{
+    static const std::vector<std::pair<juce::String, double>> list = {
+        { "1/64", 1.0 / 16 }, { "1/32", 1.0 / 8 }, { "1/16", 0.25 }, { "1/8", 0.5 }, { "1/4", 1.0 } };
+    return list;
+}
+
+const std::vector<std::pair<juce::String, double>>& modulation::sweepDivisions()
+{
+    static const std::vector<std::pair<juce::String, double>> list = {
+        { "1/16", 0.25 }, { "1/8", 0.5 }, { "1/4", 1.0 }, { "1/2", 2.0 },
+        { "1 bar", 4.0 }, { "2 bars", 8.0 }, { "4 bars", 16.0 }, { "8 bars", 32.0 } };
+    return list;
+}
+
 const std::vector<EffectDescriptor>& effectCatalogue()
 {
-    static const std::vector<EffectDescriptor> list = { makeEq(), makeCompressor(), makeReverb(), makeMultiTap(), makeDistortion() };
+    // Append-only: the order is the FX rack's button order; types are addressed by their string id.
+    static const std::vector<EffectDescriptor> list = { makeEq(), makeCompressor(), makeReverb(), makeMultiTap(), makeDistortion(),
+                                                        makeChorus(), makePhaser(), makeTremolo() };
     return list;
 }
 

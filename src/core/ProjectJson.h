@@ -28,12 +28,21 @@ Project projectFromFileJson (const juce::var& json, const juce::File& projectDir
 // --- state (MCP / inspection) --------------------------------------------------------------------
 // `declickMs` >= 0 adds the effective (rendered) fade durations to each event, computed with that
 // Default declick time; < 0 leaves them out.
-juce::var projectStateJson (const Project&, double declickMs = -1.0);
-juce::var trackJson (const Project&, const Track&, double declickMs = -1.0);
+// `compactEffects` lists each effect as effectCompactJson (identity + non-default values) instead of
+// every parameter value.
+juce::var projectStateJson (const Project&, double declickMs = -1.0, bool compactEffects = false);
+juce::var trackJson (const Project&, const Track&, double declickMs = -1.0, bool compactEffects = false);
 juce::var eventJson (const Project&, const Event&, double declickMs = -1.0);
 juce::var assetJson (const Asset&);
 juce::var effectJson (const EffectInstance&, bool includeSpecs = false);
+/** { id, type, bypassed, values } where values holds only the parameters that differ from the type's
+    defaults - choices by name, toggles as booleans. The compact form for routine reads. */
+juce::var effectCompactJson (const EffectInstance&);
+/** A parameter value as compact JSON: a choice's name, a toggle's boolean, or a tidy number. */
+juce::var paramValueJson (const ParamSpec&, float value);
 juce::var effectTypeJson (const EffectDescriptor&);
+/** { type, name, description } without the parameter specs. */
+juce::var effectTypeBriefJson (const EffectDescriptor&);
 
 /** Convenience builder for juce::var objects. */
 juce::var makeObject (std::initializer_list<std::pair<juce::Identifier, juce::var>> properties);

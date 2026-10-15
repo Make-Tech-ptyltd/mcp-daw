@@ -73,7 +73,8 @@ File → Open to see how it is put together, or ask your AI to remix it.
 * **Pitch:** right-click an event → *Pitch* (−12 … +12 semitones).
 * **Tag your loops:** File → *Embed Loop Metadata…* writes tempo, length and key into a WAV so MCP DAW
   (and other loop software) knows its tempo. *Save Copy…* keeps the original file untouched.
-* **Effects:** select a track, then use the FX Rack buttons (EQ, compressor, reverb, delay, distortion).
+* **Effects:** select a track, then use the FX Rack buttons (EQ, compressor, reverb, delay, distortion;
+  **+ MOD** for chorus, phaser, tremolo and preset chains).
 * **Undo anything:** Ctrl+Z (including everything an AI did).
 * **Save:** Ctrl+S (`.mcpdaw` project). **Export audio:** File → Render.
 * **Projects from 0.4.0** open fine. MCP DAW then offers to save an upgraded copy

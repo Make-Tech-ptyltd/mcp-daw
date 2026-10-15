@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // MCP DAW - Copyright (C) 2026 Make Tech Pty Ltd (maketech.com.au). See LICENSE.
 #include "FxRackPanel.h"
+#include "core/EffectPresets.h"
 #include "dsp/Distortion.h"
 #include "dsp/MultiTapDelay.h"
 #include "dsp/ParametricEq.h"
+#include "dsp/Tremolo.h"
 
 namespace mcpdaw::ui
 {
@@ -40,6 +42,7 @@ public:
         : app (a), effectId (std::move (fxId)), index (idx),
           spec (findFx (a, effectId)->descriptor()->params[static_cast<size_t> (idx)]) {}
     virtual void refresh() = 0;
+    const ParamSpec& paramSpec() const noexcept { return spec; }
 
 protected:
     AppContext& app;
@@ -344,6 +347,61 @@ private:
 };
 
 // ================================================================================================
+// Tremolo: the gain over two cycles from the starting point (Phase), linear gain bottom-to-top.
+// ================================================================================================
+class TremoloDisplay final : public juce::Component
+{
+public:
+    TremoloDisplay (AppContext& a, juce::String id) : app (a), effectId (std::move (id)) {}
+    void refresh() { repaint(); }
+
+    void paint (juce::Graphics& g) override
+    {
+        const auto* fx = findFx (app, effectId);
+        const auto* d = fx != nullptr ? fx->descriptor() : nullptr;
+        if (d == nullptr) return;
+        auto value = [&] (const char* id) { return valueOf (app, effectId, d->indexOf (id)); };
+        const auto shape = static_cast<modulation::Shape> (juce::jlimit (0, 2, juce::roundToInt (value ("shape"))));
+        const float depth = value ("depth");
+        const double phase = value ("phase") / 360.0;
+
+        auto r = getLocalBounds().toFloat();
+        g.setColour (colours::window);
+        g.fillRoundedRectangle (r, 4.0f);
+        auto plot = r.reduced (8.0f, 6.0f);
+        const auto caption = plot.removeFromBottom (13.0f);
+        plot.removeFromBottom (3.0f);
+        g.setColour (colours::lineSoft);
+        g.drawHorizontalLine (juce::roundToInt (plot.getY()), plot.getX(), plot.getRight());        // unity
+        g.drawVerticalLine (juce::roundToInt (plot.getCentreX()), plot.getY(), plot.getBottom());   // cycle boundary
+
+        juce::Path curve;
+        const int steps = std::max (64, juce::roundToInt (plot.getWidth()));
+        for (int i = 0; i <= steps; ++i)
+        {
+            const double x = 2.0 * i / steps;   // cycles from the start point
+            const float gain = Tremolo::gainAt (shape, depth, x + phase);
+            const float px = plot.getX() + plot.getWidth() * static_cast<float> (i) / static_cast<float> (steps);
+            const float py = plot.getBottom() - gain * plot.getHeight();
+            if (i == 0) curve.startNewSubPath (px, py); else curve.lineTo (px, py);
+        }
+        g.setColour (colours::accent.withAlpha (0.25f));
+        g.strokePath (curve, juce::PathStrokeType (4.0f));
+        g.setColour (colours::accent);
+        g.strokePath (curve, juce::PathStrokeType (1.6f));
+
+        g.setColour (colours::textFaint);
+        g.setFont (fonts::ui (10.0f));
+        const auto restart = juce::roundToInt (value ("restart")) == static_cast<int> (modulation::Restart::Event) ? "each event" : "the bar grid";
+        g.drawText ("2 cycles from " + juce::String (restart), caption, juce::Justification::centredRight);
+    }
+
+private:
+    AppContext& app;
+    const juce::String effectId;
+};
+
+// ================================================================================================
 // Multi-tap pattern display: taps as bars on a beat grid; drag to retime / relevel.
 // ================================================================================================
 class TapDisplay final : public juce::Component
@@ -537,9 +595,25 @@ public:
         }
         else
         {
+            // Continuous parameters are knobs; choices and toggles sit in a row of selectors above them.
             if (const auto* desc = findFx (app, effectId)->descriptor())
-                for (const auto& p : desc->params) globalKnobs.push_back (knob (p.id.toRawUTF8()));
+                for (size_t i = 0; i < desc->params.size(); ++i)
+                {
+                    const auto& p = desc->params[i];
+                    if (p.kind == ParamKind::Continuous) { globalKnobs.push_back (knob (p.id.toRawUTF8())); continue; }
+                    std::unique_ptr<ParamControl> ctl;
+                    if (p.kind == ParamKind::Choice) ctl = std::make_unique<ParamChoice> (app, effectId, static_cast<int> (i));
+                    else ctl = std::make_unique<ParamToggle> (app, effectId, static_cast<int> (i), p.name.toUpperCase());
+                    addAndMakeVisible (*ctl);
+                    selectors.push_back (ctl.get());
+                    controls.push_back (std::move (ctl));
+                }
             if (type == "compressor") startTimerHz (30);
+            if (type == "tremolo")
+            {
+                cycle = std::make_unique<TremoloDisplay> (app, effectId);
+                addAndMakeVisible (*cycle);
+            }
         }
         refresh();
     }
@@ -551,7 +625,9 @@ public:
         if (type == "multitap_delay") return header + 96 + 8 + delay::kNumTaps * 58 + 76 + 10;
         const int perRow = std::max (1, (width - 16) / 70);
         const int rows = (static_cast<int> (globalKnobs.size()) + perRow - 1) / perRow;
-        return header + rows * 76 + (type == "compressor" ? 26 : 0) + (type == "distortion" ? kCurveHeight + 8 : 0) + 12;
+        const int selectorRows = selectors.empty() ? 0 : (static_cast<int> (selectors.size()) + selectorsPerRow (width) - 1) / selectorsPerRow (width);
+        return header + rows * 76 + (type == "compressor" ? 26 : 0) + (type == "distortion" ? kCurveHeight + 8 : 0)
+               + (cycle != nullptr ? kCycleHeight + 8 : 0) + selectorRows * kSelectorHeight + 12;
     }
 
     void refresh()
@@ -563,6 +639,17 @@ public:
         if (graph) graph->refresh();
         if (taps) taps->refresh();
         if (curve) curve->refresh();
+        if (cycle) cycle->refresh();
+        // Cycling effects: Rate applies when free-running, Division when synced.
+        if (const auto* d = fx->descriptor(); d != nullptr && d->indexOf ("sync") >= 0)
+        {
+            const bool synced = fx->values[static_cast<size_t> (d->indexOf ("sync"))] >= 0.5f;
+            bool changed = false;
+            auto show = [&] (juce::Component* c, bool visible) { if (c != nullptr && c->isVisible() != visible) { c->setVisible (visible); changed = true; } };
+            for (auto* k : globalKnobs) if (k->paramSpec().id == "rate") show (k, ! synced);
+            for (auto* sel : selectors) if (sel->paramSpec().id == "division") show (sel, synced);
+            if (changed) resized();
+        }
         // Hide the parameter that does not apply (division when free-running, time when synced).
         for (size_t t = 0; t < tapRows.size(); ++t)
         {
@@ -611,6 +698,11 @@ public:
             for (size_t t = 0; t < tapRows.size(); ++t)
                 g.drawText ("TAP", tapRows[t].on->getBounds().translated (0, -13).withHeight (12), juce::Justification::centred);
         }
+        g.setColour (colours::textFaint);
+        g.setFont (fonts::ui (11.0f, true));
+        for (auto* sel : selectors)
+            if (sel->isVisible() && sel->paramSpec().kind == ParamKind::Choice)
+                g.drawText (sel->paramSpec().name, sel->getBounds().translated (0, -14).withHeight (13), juce::Justification::centred);
     }
 
     void resized() override
@@ -687,14 +779,36 @@ public:
             distAutoGain->setBounds (side.removeFromTop (22));
             r.removeFromTop (8);
         }
+        if (cycle != nullptr)
+        {
+            cycle->setBounds (r.removeFromTop (kCycleHeight));
+            r.removeFromTop (8);
+        }
+        if (! selectors.empty())
+        {
+            // Visible selectors only (Division hides while free-running), in rows: label above, control below.
+            std::vector<ParamControl*> shown;
+            for (auto* sel : selectors) if (sel->isVisible()) shown.push_back (sel);
+            const int perRow = selectorsPerRow (getWidth());
+            const int sw = r.getWidth() / perRow;
+            const int rows = (static_cast<int> (selectors.size()) + perRow - 1) / perRow;
+            auto area = r.removeFromTop (rows * kSelectorHeight);
+            for (size_t i = 0; i < shown.size(); ++i)
+            {
+                const int row = static_cast<int> (i) / perRow, col = static_cast<int> (i) % perRow;
+                shown[i]->setBounds (area.getX() + col * sw + 3, area.getY() + row * kSelectorHeight + 15, sw - 6, kSelectorHeight - 19);
+            }
+        }
+        std::vector<ParamKnob*> knobs;
+        for (auto* k : globalKnobs) if (k->isVisible()) knobs.push_back (k);
         const int perRow = std::max (1, (r.getWidth()) / 70);
         const int kw = r.getWidth() / perRow;
-        for (size_t i = 0; i < globalKnobs.size(); ++i)
+        for (size_t i = 0; i < knobs.size(); ++i)
         {
             const int row = static_cast<int> (i) / perRow, col = static_cast<int> (i) % perRow;
-            globalKnobs[i]->setBounds (r.getX() + col * kw, r.getY() + row * 76, kw, 72);
+            knobs[i]->setBounds (r.getX() + col * kw, r.getY() + row * 76, kw, 72);
         }
-        const int rows = (static_cast<int> (globalKnobs.size()) + perRow - 1) / perRow;
+        const int rows = (static_cast<int> (knobs.size()) + perRow - 1) / perRow;
         grArea = juce::Rectangle<int> (r.getX(), r.getY() + rows * 76 + 2, r.getWidth(), 18);
     }
 
@@ -716,6 +830,10 @@ private:
     std::unique_ptr<EqGraph> graph;
     std::unique_ptr<TapDisplay> taps;
     std::unique_ptr<DistortionCurve> curve;
+    std::unique_ptr<TremoloDisplay> cycle;
+    std::vector<ParamControl*> selectors;   // generic editor: choice / toggle parameters
+    static constexpr int kCycleHeight = 84, kSelectorHeight = 42;
+    static int selectorsPerRow (int width) { return std::max (1, (width - 16) / 96); }
     ParamChoice* distType = nullptr;
     ParamToggle* distAutoGain = nullptr;
     static constexpr int kCurveHeight = 120;
@@ -758,8 +876,10 @@ FxRackPanel::FxRackPanel (AppContext& a) : app (a)
         rebuild (true);
     };
 
+    static const juce::StringArray modulationTypes { "chorus", "phaser", "tremolo" };   // under "+ MOD"
     for (const auto& d : effectCatalogue())
     {
+        if (modulationTypes.contains (d.type)) continue;
         const auto label = d.type == "eq" ? "+ EQ" : d.type == "compressor" ? "+ COMP" : d.type == "reverb" ? "+ VERB"
                          : d.type == "distortion" ? "+ DIST" : "+ DELAY";
         auto* b = addButtons.add (new juce::TextButton (label));
@@ -774,6 +894,30 @@ FxRackPanel::FxRackPanel (AppContext& a) : app (a)
         };
         addAndMakeVisible (b);
     }
+    auto* mod = addButtons.add (new juce::TextButton ("+ MOD"));
+    mod->setTooltip ("Add chorus, phaser or tremolo - or a preset chain of ordinary effects");
+    mod->setWantsKeyboardFocus (false);
+    mod->onClick = [this, mod]
+    {
+        const auto target = currentTarget();
+        if (target.isEmpty()) { app.status ("Select a track (or Master) first", true); return; }
+        juce::PopupMenu menu, presets;
+        for (int i = 0; i < modulationTypes.size(); ++i)
+            menu.addItem (1 + i, "Add " + findEffectType (modulationTypes[i])->name);
+        const auto& list = effectPresets();
+        for (size_t i = 0; i < list.size(); ++i)
+            presets.addItem (100 + static_cast<int> (i), list[i].name);
+        menu.addSeparator();
+        menu.addSubMenu ("Add preset chain", presets);
+        menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (mod), [this, target] (int result)
+        {
+            if (result >= 1 && result <= modulationTypes.size())
+                app.run ("add_effect", makeObject ({ { "target", target }, { "type", modulationTypes[result - 1] } }));
+            else if (result >= 100 && static_cast<size_t> (result - 100) < effectPresets().size())
+                app.run ("add_effect_preset", makeObject ({ { "target", target }, { "preset", effectPresets()[static_cast<size_t> (result - 100)].id } }));
+        });
+    };
+    addAndMakeVisible (mod);
     viewport.setViewedComponent (&moduleHolder, false);
     viewport.setScrollBarsShown (true, false);
     addAndMakeVisible (viewport);
@@ -901,9 +1045,13 @@ void FxRackPanel::paint (juce::Graphics& g)
 void FxRackPanel::resized()
 {
     auto r = getLocalBounds().reduced (6);
+    // Widths follow the label lengths, so "+ DELAY" still fits beside the shorter labels.
     auto buttons = r.removeFromTop (28);
-    const int bw = buttons.getWidth() / std::max (1, addButtons.size());
-    for (auto* b : addButtons) b->setBounds (buttons.removeFromLeft (bw).reduced (2, 0));
+    int letters = 0;
+    for (auto* b : addButtons) letters += b->getButtonText().length() + 2;
+    const int total = buttons.getWidth();
+    for (auto* b : addButtons)
+        b->setBounds (buttons.removeFromLeft (total * (b->getButtonText().length() + 2) / std::max (1, letters)).reduced (2, 0));
     r.removeFromTop (6);
     viewport.setBounds (r);
     layoutModules();

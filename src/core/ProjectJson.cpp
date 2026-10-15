@@ -80,13 +80,39 @@ juce::var paramSpecJson (const ParamSpec& p, float value, bool includeValue)
     return o;
 }
 
-juce::var chainJson (const std::vector<EffectInstance>& chain, bool includeSpecs)
+juce::var chainJson (const std::vector<EffectInstance>& chain, bool compact)
 {
     juce::Array<juce::var> list;
-    for (const auto& fx : chain) list.add (effectJson (fx, includeSpecs));
+    for (const auto& fx : chain) list.add (compact ? effectCompactJson (fx) : effectJson (fx, false));
     return list;
 }
 } // namespace
+
+juce::var paramValueJson (const ParamSpec& p, float value)
+{
+    switch (p.kind)
+    {
+        case ParamKind::Toggle: return value >= 0.5f;
+        case ParamKind::Choice: return p.format (value);
+        case ParamKind::Continuous: break;
+    }
+    return tidy (value);
+}
+
+juce::var effectCompactJson (const EffectInstance& fx)
+{
+    auto* values = new juce::DynamicObject();
+    if (const auto* d = fx.descriptor())
+        for (size_t i = 0; i < d->params.size() && i < fx.values.size(); ++i)
+            if (tidy (fx.values[i]) != tidy (d->params[i].def))
+                values->setProperty (d->params[i].id, paramValueJson (d->params[i], fx.values[i]));
+    return makeObject ({ { "id", fx.id }, { "type", fx.type }, { "bypassed", fx.bypassed }, { "values", juce::var (values) } });
+}
+
+juce::var effectTypeBriefJson (const EffectDescriptor& d)
+{
+    return makeObject ({ { "type", d.type }, { "name", d.name }, { "description", d.description } });
+}
 
 juce::var effectJson (const EffectInstance& fx, bool includeSpecs)
 {
@@ -159,7 +185,7 @@ juce::var eventJson (const Project& p, const Event& e, double declickMs)
     return o;
 }
 
-juce::var trackJson (const Project& p, const Track& t, double declickMs)
+juce::var trackJson (const Project& p, const Track& t, double declickMs, bool compactEffects)
 {
     std::vector<const Event*> sorted;
     for (const auto& e : t.events) sorted.push_back (&e);
@@ -170,21 +196,21 @@ juce::var trackJson (const Project& p, const Track& t, double declickMs)
     const bool audible = ! t.mute && (! p.anySolo() || t.solo);
     return makeObject ({ { "id", t.id }, { "name", t.name }, { "index", p.trackIndex (t.id) }, { "colour", t.colour },
                          { "gainDb", t.gainDb }, { "pan", t.pan }, { "mute", t.mute }, { "solo", t.solo }, { "audible", audible },
-                         { "occupiedBars", occupiedBars (t) }, { "events", events }, { "effects", chainJson (t.effects, false) } });
+                         { "occupiedBars", occupiedBars (t) }, { "events", events }, { "effects", chainJson (t.effects, compactEffects) } });
 }
 
-juce::var projectStateJson (const Project& p, double declickMs)
+juce::var projectStateJson (const Project& p, double declickMs, bool compactEffects)
 {
     juce::Array<juce::var> assets, tracks;
     for (const auto& a : p.assets) assets.add (assetJson (a));
-    for (const auto& t : p.tracks) tracks.add (trackJson (p, t, declickMs));
+    for (const auto& t : p.tracks) tracks.add (trackJson (p, t, declickMs, compactEffects));
     const Tick end = p.contentEnd();
     auto state = makeObject ({
         { "name", p.name }, { "bpm", p.bpm }, { "timeSignature", "4/4" }, { "ticksPerBeat", static_cast<int> (kTicksPerBeat) },
         { "positionUnits", "zero-based beats (quarter notes); bar N starts at beat (N-1)*4" },
         { "lengthBeats", ticksToBeats (end) }, { "lengthBars", static_cast<double> (end) / kTicksPerBar },
         { "loop", makeObject ({ { "enabled", p.loopEnabled }, { "startBeat", ticksToBeats (p.loopStart) }, { "endBeat", ticksToBeats (p.loopEnd) } }) },
-        { "master", makeObject ({ { "gainDb", p.master.gainDb }, { "effects", chainJson (p.master.effects, false) } }) },
+        { "master", makeObject ({ { "gainDb", p.master.gainDb }, { "effects", chainJson (p.master.effects, compactEffects) } }) },
         { "assets", assets }, { "tracks", tracks } });
     if (declickMs >= 0.0)
         state.getDynamicObject()->setProperty ("editing", makeObject ({ { "defaultDeclickMs", declickMs },

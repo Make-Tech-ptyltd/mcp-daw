@@ -65,4 +65,22 @@ namespace distortion
     enum class Type { Soft = 0, Warm, Hard, Fuzz, Fold };
     juce::StringArray typeNames();
 }
+
+/** Shared by the cycling (LFO) effects: tremolo, chorus and phaser. Choice lists are append-only:
+    saved projects store the index. */
+namespace modulation
+{
+    /** Where a cycle starts: on the project timeline (beat 0), or at each event onset on the track. */
+    enum class Restart { Timeline = 0, Event };
+    juce::StringArray restartNames();
+
+    /** Tremolo waveform. Phase 0 is the loudest point for every shape; phase 180 deg the quietest. */
+    enum class Shape { Sine = 0, Triangle, Square };
+    juce::StringArray shapeNames();
+
+    /** One full cycle per division, in beats. Tremolo: 1/64 .. 1/4. */
+    const std::vector<std::pair<juce::String, double>>& tremoloDivisions();
+    /** Slower cycles for chorus/phaser sync: 1/16 .. 8 bars. */
+    const std::vector<std::pair<juce::String, double>>& sweepDivisions();
+}
 } // namespace mcpdaw

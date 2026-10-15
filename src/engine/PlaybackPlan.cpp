@@ -54,6 +54,25 @@ std::shared_ptr<EffectRuntime> RuntimeRegistry::findEffect (const juce::String& 
 }
 
 // ================================================================================================
+bool isContinuation (const Project& project, const Event& prev, const Event& next)
+{
+    if (&prev == &next || prev.end() != next.start || prev.assetId != next.assetId) return false;
+    if (prev.looping != next.looping || prev.reversed != next.reversed || prev.pitchSemitones != next.pitchSemitones) return false;
+    if (prev.fadeOutTicks > 0 || next.fadeInTicks > 0) return false;
+    const auto* asset = project.findAsset (prev.assetId);
+    const double duration = asset != nullptr ? asset->durationSeconds() : 0.0;
+    if (duration <= 0.0) return false;
+
+    // Source position (seconds) where prev stops and where next begins. Forwards a window starts at its
+    // offset; reversed it is heard from its top (offset + length) down to its offset.
+    auto span = [&] (const Event& e) { return ticksToSeconds (e.length, project.bpm) * e.rate(); };
+    const double prevStops = prev.reversed ? prev.sourceOffsetSeconds : prev.sourceOffsetSeconds + span (prev);
+    const double nextBegins = next.reversed ? next.sourceOffsetSeconds + span (next) : next.sourceOffsetSeconds;
+    double gap = std::abs (prevStops - nextBegins);
+    if (prev.looping) gap = std::min (std::fmod (gap, duration), duration - std::fmod (gap, duration));
+    return gap < 1.0e-6;   // split offsets are computed with the same arithmetic; this is far below one sample
+}
+
 namespace
 {
 void buildChain (PlaybackPlan& plan, PlanChannel& channel, const std::vector<EffectInstance>& chain,
@@ -67,6 +86,30 @@ void buildChain (PlaybackPlan& plan, PlanChannel& channel, const std::vector<Eff
         plan.effectRuntimes.push_back (rt);
         if (! fx.bypassed) channel.effects.push_back (rt->processor.get());
     }
+}
+
+/** Onset samples of a track's events (see PlanChannel::onsets). */
+std::vector<std::int64_t> eventOnsets (const Project& project, const Track& track, double sampleRate)
+{
+    // Only an event ending exactly where another starts can be continued: index the events by end.
+    std::vector<std::pair<Tick, const Event*>> byEnd;
+    byEnd.reserve (track.events.size());
+    for (const auto& e : track.events) byEnd.emplace_back (e.end(), &e);
+    std::sort (byEnd.begin(), byEnd.end(), [] (const auto& a, const auto& b) { return a.first < b.first; });
+
+    std::vector<std::int64_t> onsets;
+    onsets.reserve (track.events.size());
+    for (const auto& e : track.events)
+    {
+        auto it = std::lower_bound (byEnd.begin(), byEnd.end(), e.start, [] (const auto& item, Tick t) { return item.first < t; });
+        bool continues = false;
+        for (; it != byEnd.end() && it->first == e.start && ! continues; ++it)
+            continues = isContinuation (project, *it->second, e);
+        if (! continues) onsets.push_back (ticksToSamples (e.start, project.bpm, sampleRate));
+    }
+    std::sort (onsets.begin(), onsets.end());
+    onsets.erase (std::unique (onsets.begin(), onsets.end()), onsets.end());
+    return onsets;
 }
 
 /** Balance pan law: unity at centre, the far side attenuates. Right for stereo loops. */
@@ -157,6 +200,7 @@ std::unique_ptr<PlaybackPlan> PlaybackPlan::build (const Project& project, Runti
             ch.events.push_back (pe);
         }
         std::sort (ch.events.begin(), ch.events.end(), [] (const PlanEvent& a, const PlanEvent& b) { return a.start < b.start; });
+        ch.onsets = eventOnsets (project, track, plan->sampleRate);
         buildChain (*plan, ch, track.effects, registry, liveIds);
         plan->tracks.push_back (std::move (ch));
     }

@@ -89,6 +89,7 @@ add_library(mcpdaw_core STATIC
     src/core/WavLoopMetadata.h        src/core/WavLoopMetadata.cpp
     src/core/AudioAsset.h             src/core/AudioAsset.cpp
     src/core/EffectCatalogue.h        src/core/EffectCatalogue.cpp
+    src/core/EffectPresets.h          src/core/EffectPresets.cpp
     src/core/ProjectJson.h            src/core/ProjectJson.cpp
     src/core/JsonArgs.h               src/core/JsonArgs.cpp
     src/core/ProjectController.h      src/core/ProjectController.cpp
@@ -100,6 +101,10 @@ add_library(mcpdaw_core STATIC
     src/dsp/Reverb.h                  src/dsp/Reverb.cpp
     src/dsp/MultiTapDelay.h           src/dsp/MultiTapDelay.cpp
     src/dsp/Distortion.h              src/dsp/Distortion.cpp
+    src/dsp/CycleClock.h
+    src/dsp/Chorus.h                  src/dsp/Chorus.cpp
+    src/dsp/Phaser.h                  src/dsp/Phaser.cpp
+    src/dsp/Tremolo.h                 src/dsp/Tremolo.cpp
     src/engine/TimeStretch.h
     src/engine/PlaybackPlan.h         src/engine/PlaybackPlan.cpp
     src/engine/PlanRenderer.h         src/engine/PlanRenderer.cpp
@@ -222,6 +227,7 @@ if(MCPDAW_BUILD_TESTS)
         tests/ScriptTests.cpp
         tests/EditingTests.cpp
         tests/WavMetadataTests.cpp
+        tests/ModulationTests.cpp
         "${MCPDAW_MANIFEST_CPP}")
     add_dependencies(mcpdaw_tests mcpdaw_manifest_gen)
     target_link_libraries(mcpdaw_tests PRIVATE mcpdaw_core mcpdaw_warnings)

@@ -19,6 +19,9 @@ Built by Make Tech Pty Ltd — [maketech.com.au](https://maketech.com.au). Free 
   first run, and the demo's songs and samples in `demo/`.
 * **Scripting:** control MCP DAW from Python with `tools/mcp_daw.py` — see
   **[Scripting](docs/SCRIPTING.md)** and the full **[tool reference](docs/TOOLS.md)**.
+* **Example songs:** **[examples/songs](examples/songs/README.md)** — two complete songs (Blade
+  Runner pads over a Dilla-style break; a Benga-style dubstep live set), each with the script that
+  builds it live over MCP. Open them, rebuild them with a new seed, or hand them to your AI to learn from.
 
 ## How the AI connection works
 
@@ -34,7 +37,7 @@ DAW over a per-user local pipe — no network port, nothing reachable from anoth
   waits up to 25 s. Untick it to lock MCP DAW to the first AI that connects.
 * **You can see it:** the top bar shows who is connected (**MCP: Claude**), and the status bar shows
   each command as it arrives: `Claude ▸ create_event ×12 · set_event_gain · play`.
-* **Same actions as the GUI:** the 61 tools are generated from the app's own action registry, plus
+* **Same actions as the GUI:** the 62 tools are generated from the app's own action registry, plus
   `execute_batch` for atomic multi-step edits (one undo step, with `$N.field` result references).
 
 Help → *MCP / AI control setup* copies ready-to-paste configs, e.g. for Claude Desktop:
@@ -88,6 +91,12 @@ Help → *MCP / AI control setup* copies ready-to-paste configs, e.g. for Claude
   harmonics), pre-drive low cut, post tone, bit/sample-rate crusher, auto gain and mix. The graph
   shows the transfer curve. Warm, 6–12 dB, bias 0.2, mix 60 % for a subtle warm bass; Fuzz or Fold
   at 30 dB+ with bits 6 / downsample 4 for brutal and crusty.
+* **Tremolo, chorus, phaser** (FX rack → *+ MOD*): tempo-synced tremolo (1/64 … 1/4, sine /
+  triangle / square, 0–60 dB depth, start phase); chorus that also does flanger and vibrato; six-stage
+  phaser. Cycles follow the bar grid or **restart on every event** — a bass note pulses the same way
+  each time, even when playback starts halfway through it. *Add preset chain* inserts ready-made
+  chains (dubstep pulse/swell, trip-hop drum crunch, cinematic synth ambience) as ordinary effects.
+  See **[Modulation](docs/MODULATION.md)**.
 
 Positions are zero-based beats; bar N starts at beat (N−1)×4. Audio plays unstretched (no
 time-stretching yet), so use loops at the project tempo, or one-shots, which follow any tempo.
@@ -125,7 +134,8 @@ src/core     Project model (value type), MusicalTime (960 PPQ ticks), Fades (the
              envelope), JSON I/O + format migration, ProjectController (undo/transactions), Actions
              (registry + JSON-schema'd commands shared by GUI and MCP), WavLoopMetadata (RIFF 'acid'
              chunk reader/writer that never touches the PCM data)
-src/dsp      EffectProcessor interface + EQ, compressor, reverb, multi-tap delay, distortion (no allocation in process)
+src/dsp      EffectProcessor interface + EQ, compressor, reverb, multi-tap delay, distortion, chorus, phaser,
+             tremolo; CycleClock (timeline/event-locked LFO phase) (no allocation in process)
 src/engine   PlaybackPlan (immutable, render-ready snapshot), PlanRenderer (shared by live + offline),
              AudioEngine (device callback, transport, lock-free plan swap, retire queue), OfflineRenderer
 src/mcp      McpSession (JSON-RPC/MCP over the registry), McpPipeServer (named pipe in the app),
@@ -133,6 +143,7 @@ src/mcp      McpSession (JSON-RPC/MCP over the registry), McpPipeServer (named p
 src/ui       Theme, dockable Workspace, Timeline, Transport, Mixer, FX rack, Browser
 tools        mcp-bridge (bridge exe + build-time manifest generator), mcp_daw.py client, example
              scripts, tool-reference and icon generators
+examples     example songs: the scripts that build them over MCP, their projects and samples
 tests        headless JUCE UnitTest suite (core, commands/undo, DSP signal tests, engine, MCP, bridge,
              fades/declick, reverse, slip, migration, WAV loop metadata)
 ```
@@ -143,7 +154,9 @@ returns the old plan through a wait-free SPSC ring for deletion on the message t
 processors and gain smoothers live in runtimes that persist across plans (keyed by id), so moving
 a fader never resets a reverb tail. Transport position is an integer sample counter. Event
 fades and the Default declick time are resolved to per-event sample counts when the plan is built,
-so the callback applies one envelope per edge and never reads preferences.
+so the callback applies one envelope per edge and never reads preferences. Cycling effects derive
+their phase from the timeline position of each sample (and the track's event onsets, compiled into
+the plan), so playback, seeks, loops and bounces agree regardless of buffer size.
 
 ## Licence
 

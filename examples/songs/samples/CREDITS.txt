@@ -1,0 +1,19 @@
+Example song samples
+====================
+
+Synthesised by MCP DAW's own tools (in this repository):
+  break_165bpm.wav, dark_pad_165bpm.wav, dub_stab_165bpm.wav,
+  reese_165bpm.wav, vinyl_165bpm.wav       tools/make_jungle_loops.py
+  keys_90bpm.wav                          tools/make_demo_loops.py
+
+Copies of the demo samples (demo/samples), selected by Ken from his own library:
+  ch.wav, cs10-open-hihat1.wav, cy5010.wav, snare-2.wav
+
+The example songs also use samples from the Samples Starter Kit (Samples-Starter-Kit/).
+
+Licence
+-------
+These samples are by Make Tech Pty Ltd and are not covered by MCP DAW's software licence (AGPL).
+You may use them free of charge in your own music and productions, commercial or not, with no
+credit required. You may not sell or redistribute the samples themselves, on their own or as part
+of another sample pack or library.
